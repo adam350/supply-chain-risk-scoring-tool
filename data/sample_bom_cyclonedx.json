@@ -1,0 +1,11 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "components": [
+    {"name": "BMC Firmware", "supplier": {"name": "AMI"}, "version": "12.4", "properties": [{"name": "origin_country", "value": "US"}]},
+    {"name": "NIC Firmware", "supplier": {"name": "Broadcom"}, "version": "21.60", "properties": [{"name": "origin_country", "value": "US"}]},
+    {"name": "TPM Module", "supplier": {"name": "Nuvoton"}, "version": "1.3.2", "properties": [{"name": "origin_country", "value": "TW"}]},
+    {"name": "Network Camera Module", "supplier": {"name": "Hikvision"}, "version": "DS-2CD2143", "properties": [{"name": "origin_country", "value": "CN"}]},
+    {"name": "Custom Sensor Board", "supplier": {"name": "Rev3 Labs"}, "version": "2.1", "properties": [{"name": "origin_country", "value": "ZZ"}]}
+  ]
+}

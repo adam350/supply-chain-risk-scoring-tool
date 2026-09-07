@@ -1,0 +1,15 @@
+component_name,vendor,version,origin_country,part_number
+CPU,Intel,Xeon-8480+,US,INTC-8480P
+GPU,NVIDIA,H100-SXM5,TW,NV-H100-SXM5
+Motherboard,Supermicro,X13-DPG,US,SM-X13DPG
+BMC Firmware,AMI,12.4,US,AMI-BMC-124
+UEFI Firmware,AMI,5.19,US,AMI-UEFI-519
+NIC Firmware,Broadcom,21.60,US,BCM-NIC-2160
+RAID Controller Firmware,Broadcom,52.16.0,SG,BCM-RAID-5216
+Power Supply Unit,Delta Electronics,DPS-2000AB,TW,DELTA-2000AB
+Memory Module,Samsung,DDR5-4800-64GB,KR,SAM-DDR5-64
+TPM Module,Nuvoton,1.3.2,TW,NUV-TPM-132
+Cooling Fan Controller,Foxconn,FCX-200,TW,FOX-FCX200
+PCIe Switch,Broadcom,PEX89104,US,BCM-PEX89104
+Network Camera Module,Hikvision,DS-2CD2143,CN,HIK-2CD2143
+Custom Sensor Board,Rev3 Labs,2.1,ZZ,RVL-SENSOR-21

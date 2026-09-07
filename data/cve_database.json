@@ -1,0 +1,115 @@
+{
+  "_source_note": "MIXED PROVENANCE, DISCLOSED PER-ENTRY. Each entry has a 'provenance' field: 'real' (a genuine, published, verifiable CVE - source_url included, check it yourself) or 'simulated' (fabricated for this prototype to cover a component category with no convenient real public CVE, ID suffixed '-SIM' so it's never mistaken for a resolvable record). Schema mirrors the real NVD structure (https://nvd.nist.gov/developers/vulnerabilities) and CVSS v3.1 (https://www.first.org/cvss/v3.1/specification-document). See /REFERENCES.md section 1-2.",
+  "entries": [
+    {
+      "cve_id": "CVE-2019-6260",
+      "provenance": "real",
+      "source_url": "https://www.flamingspork.com/blog/2019/01/23/cve-2019-6260-gaining-control-of-bmc-from-the-host-processor/",
+      "component_name": "BMC Firmware",
+      "vendor": "Aspeed",
+      "affected_versions": ["<=2.9"],
+      "cvss_score": 9.8,
+      "severity": "CRITICAL",
+      "description": "Nicknamed 'Pantsdown'. ASPEED AST2400/AST2500 BMC hardware and firmware implement AHB bridges allowing arbitrary read/write access to the BMC's physical address space from the host, enabling unauthenticated compromise. Affected numerous OEMs including Supermicro, Gigabyte, IBM, HPE."
+    },
+    {
+      "cve_id": "CVE-2023-34329",
+      "provenance": "real",
+      "source_url": "https://eclypsium.com/research/bmcc-lights-out-forever/",
+      "component_name": "BMC Firmware",
+      "vendor": "AMI",
+      "affected_versions": ["<=12.4", "12.5"],
+      "cvss_score": 9.1,
+      "severity": "CRITICAL",
+      "description": "Authentication bypass via HTTP header spoofing in AMI MegaRAC BMC's Redfish host interface. Part of the 'BMC&C' vulnerability set disclosed by Eclypsium; affects devices from AMD, Asus, Dell EMC, Gigabyte, HPE, Lenovo, Nvidia, and others using MegaRAC SP-X."
+    },
+    {
+      "cve_id": "CVE-2023-34330",
+      "provenance": "real",
+      "source_url": "https://eclypsium.com/research/bmcc-lights-out-forever/",
+      "component_name": "BMC Firmware",
+      "vendor": "AMI",
+      "affected_versions": ["<=12.4", "12.5"],
+      "cvss_score": 8.2,
+      "severity": "HIGH",
+      "description": "Code injection via AMI MegaRAC's Dynamic Redfish Extension interface, allowing arbitrary code execution as root on the BMC chip. Chains with CVE-2023-34329 for full remote takeover."
+    },
+    {
+      "cve_id": "CVE-2021-3711-SIM",
+      "provenance": "simulated",
+      "source_url": null,
+      "component_name": "NIC Firmware",
+      "vendor": "Broadcom",
+      "affected_versions": ["<=21.60"],
+      "cvss_score": 9.1,
+      "severity": "CRITICAL",
+      "description": "SIMULATED for prototype coverage - no convenient real public CVE found for this exact component/vendor pairing during research. Shape (buffer overflow in NIC firmware packet parsing, remote code execution) is representative of real firmware CVE patterns, not copied from a specific advisory."
+    },
+    {
+      "cve_id": "CVE-2023-22809-SIM",
+      "provenance": "simulated",
+      "source_url": null,
+      "component_name": "RAID Controller Firmware",
+      "vendor": "Broadcom",
+      "affected_versions": ["<=52.16.0"],
+      "cvss_score": 7.8,
+      "severity": "HIGH",
+      "description": "SIMULATED for prototype coverage - fabricated privilege-escalation scenario in RAID controller management utility via crafted configuration file. Not a real, resolvable CVE record."
+    },
+    {
+      "cve_id": "CVE-2022-31160-SIM",
+      "provenance": "simulated",
+      "source_url": null,
+      "component_name": "UEFI Firmware",
+      "vendor": "AMI",
+      "affected_versions": ["<=5.19"],
+      "cvss_score": 8.2,
+      "severity": "HIGH",
+      "description": "SIMULATED for prototype coverage - fabricated SMM memory corruption scenario in UEFI firmware. Real UEFI/BIOS supply-chain vulnerability classes this is modeled on include the real, published 'LogoFAIL' (2023, multiple UEFI vendors) and 'PixieFail' (2023, network boot stack) vulnerability sets - not copied from either, but representative of the same vulnerability class."
+    },
+    {
+      "cve_id": "CVE-2020-8705-SIM",
+      "provenance": "simulated",
+      "source_url": null,
+      "component_name": "TPM Firmware",
+      "vendor": "Infineon",
+      "affected_versions": ["<=7.85"],
+      "cvss_score": 6.5,
+      "severity": "MEDIUM",
+      "description": "SIMULATED for prototype coverage - fabricated weak-RSA-key-generation scenario. Modeled on the real, published 'ROCA' vulnerability (CVE-2017-15361), a genuine Infineon TPM RSA key generation flaw, but this entry's ID/version range is fabricated, not the real ROCA record."
+    },
+    {
+      "cve_id": "CVE-2023-1017-SIM",
+      "provenance": "simulated",
+      "source_url": null,
+      "component_name": "TPM Firmware",
+      "vendor": "Nuvoton",
+      "affected_versions": ["<=1.3.2"],
+      "cvss_score": 5.3,
+      "severity": "MEDIUM",
+      "description": "SIMULATED for prototype coverage - fabricated out-of-bounds write scenario in TPM command parsing. Not a real, resolvable CVE record."
+    },
+    {
+      "cve_id": "CVE-2022-21894-SIM",
+      "provenance": "simulated",
+      "source_url": null,
+      "component_name": "Bootloader Firmware",
+      "vendor": "AMI",
+      "affected_versions": ["<=3.1"],
+      "cvss_score": 7.5,
+      "severity": "HIGH",
+      "description": "SIMULATED for prototype coverage - fabricated Secure Boot bypass scenario. Not a real, resolvable CVE record."
+    },
+    {
+      "cve_id": "CVE-2021-26339-SIM",
+      "provenance": "simulated",
+      "source_url": null,
+      "component_name": "PCIe Switch Firmware",
+      "vendor": "Broadcom",
+      "affected_versions": ["<=4.2"],
+      "cvss_score": 6.8,
+      "severity": "MEDIUM",
+      "description": "SIMULATED for prototype coverage - fabricated denial-of-service scenario in PCIe switch management plane. Not a real, resolvable CVE record."
+    }
+  ]
+}

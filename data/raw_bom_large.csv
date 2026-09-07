@@ -1,0 +1,66 @@
+unit_id,component_name,vendor,version,origin_country,part_number
+NODE-01,CPU,Intel,Xeon-8480+,US,INTC-8480P
+NODE-01,GPU,NVIDIA,H100-SXM5,TW,NV-H100-SXM5
+NODE-01,Motherboard,Supermicro,X13-DPG,US,SM-X13DPG
+NODE-01,BMC Firmware,AMI,12.4,US,AMI-BMC-124
+NODE-01,UEFI Firmware,AMI,5.19,US,AMI-UEFI-519
+NODE-01,NIC Firmware,Broadcom,21.60,US,BCM-NIC-2160
+NODE-01,RAID Controller Firmware,Broadcom,52.16.0,SG,BCM-RAID-5216
+NODE-01,Power Supply Unit,Delta Electronics,DPS-2000AB,TW,DELTA-2000AB
+NODE-01,Memory Module,Samsung,DDR5-4800-64GB,KR,SAM-DDR5-64
+NODE-01,TPM Module,Nuvoton,1.3.2,TW,NUV-TPM-132
+NODE-01,Cooling Fan Controller,Foxconn,FCX-200,TW,FOX-FCX200
+NODE-01,PCIe Switch,Broadcom,PEX89104,US,BCM-PEX89104
+NODE-01,Network Camera Module,Hikvision,DS-2CD2143,CN,HIK-2CD2143
+NODE-01,Custom Sensor Board,Rev3 Labs,2.1,ZZ,RVL-SENSOR-21
+NODE-01,Bootloader Firmware,AMI,3.1,US,AMI-BOOT-31
+NODE-02,CPU,intel,Xeon-8480+,United States,INTC-8480P
+NODE-02,GPU,nvidia,H100-SXM5,Taiwan,NV-H100-SXM5
+NODE-02,Motherboard,supermicro,X13-DPG,United States,SM-X13DPG
+NODE-02,BMC Firmware,ami,12.4,United States,AMI-BMC-124
+NODE-02,UEFI Firmware,ami,5.19,United States,AMI-UEFI-519
+NODE-02,NIC Firmware,broadcom,21.60,United States,BCM-NIC-2160
+NODE-02,RAID Controller Firmware,broadcom,52.16.0,Singapore,BCM-RAID-5216
+NODE-02,Power Supply Unit,Delta Electronics,DPS-2000AB,Taiwan,DELTA-2000AB
+NODE-02,Memory Module,Samsung,DDR5-4800-64GB,South Korea,SAM-DDR5-64
+NODE-02,TPM Module,Nuvoton,1.3.2,Taiwan,NUV-TPM-132
+NODE-02,Cooling Fan Controller,Foxconn,FCX-200,Taiwan,FOX-FCX200
+NODE-02,PCIe Switch,Broadcom,PEX89104,United States,BCM-PEX89104
+NODE-02,Network Camera Module,Hikvision,DS-2CD2143,China,HIK-2CD2143
+NODE-02,Custom Sensor Board,Rev3 Labs,2.1,ZZ,RVL-SENSOR-21
+NODE-02,Bootloader Firmware,AMI,3.1,United States,AMI-BOOT-31
+NODE-03,CPU,Intel,Xeon-8480+,US,INTC-8480P
+NODE-03,GPU,NVIDIA,H100-SXM5,TW,NV-H100-SXM5
+NODE-03,Motherboard,Supermicro,X13-DPG,US,SM-X13DPG
+NODE-03,BMC Firmware,AMI,12.4,US,AMI-BMC-124
+NODE-03,BMC Firmware,AMI,12.4,US,AMI-BMC-124
+NODE-03,UEFI Firmware,AMI,5.19,US,AMI-UEFI-519
+NODE-03,NIC Firmware,Broadcom,21.60,US,BCM-NIC-2160
+NODE-03,RAID Controller Firmware,Broadcom,52.16.0,SG,BCM-RAID-5216
+NODE-03,,,,, 
+NODE-03,Power Supply Unit,Delta Electronics,DPS-2000AB,TW,DELTA-2000AB
+NODE-03,Memory Module,Samsung,DDR5-4800-64GB,KR,SAM-DDR5-64
+NODE-03,TPM Module,Nuvoton,1.3.2,TW,NUV-TPM-132
+NODE-03,TBD,TBD,TBD,ZZ,TBD-0000
+NODE-03,Cooling Fan Controller,Foxconn,FCX-200,TW,FOX-FCX200
+NODE-03,PCIe Switch,Broadcom,PEX89104,US,BCM-PEX89104
+NODE-03,Network Camera Module,Hikvision,DS-2CD2143,CN,HIK-2CD2143
+NODE-03,Custom Sensor Board,Rev3 Labs,2.1,ZZ,RVL-SENSOR-21
+NODE-03,Bootloader Firmware,AMI,3.1,US,AMI-BOOT-31
+NODE-04,CPU,Intel,Xeon-8480+,US,INTC-8480P
+NODE-04,GPU,NVIDIA,H100-SXM5,TW,NV-H100-SXM5
+NODE-04,Motherboard,Supermicro,X13-DPG,US,SM-X13DPG
+NODE-04,BMC Firmware,AMI,12.4,US,AMI-BMC-124
+NODE-04,UEFI Firmware,AMI,6.0,US,AMI-UEFI-600
+unit_id,component_name,vendor,version,origin_country,part_number
+NODE-04,NIC Firmware,Broadcom,21.60,US,BCM-NIC-2160
+NODE-04,RAID Controller Firmware,Broadcom,52.16.0,SG,BCM-RAID-5216
+NODE-04,Power Supply Unit,Delta Electronics,DPS-2000AB,TW,DELTA-2000AB
+NODE-04,Memory Module,Samsung,DDR5-4800-64GB,KR,SAM-DDR5-64
+NODE-04,TPM Module,Nuvoton,1.3.2,TW,NUV-TPM-132
+NODE-04,Cooling Fan Controller,Foxconn,FCX-200,TW,FOX-FCX200
+NODE-04,xxx,xxx,xxx,xxx,xxx
+NODE-04,PCIe Switch,Broadcom,PEX89104,US,BCM-PEX89104
+NODE-04,Network Camera Module,Hikvision,DS-2CD2143,CN,HIK-2CD2143
+NODE-04,Custom Sensor Board,Rev3 Labs,2.1,ZZ,RVL-SENSOR-21
+NODE-04,Bootloader Firmware,AMI,3.1,US,AMI-BOOT-31

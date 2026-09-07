@@ -1,0 +1,23 @@
+{
+  "_source_note": "MIXED PROVENANCE - DISCLOSED PER-FIELD. restricted_vendors: Hikvision and Dahua are REAL companies under REAL current U.S. restrictions - NDAA Section 889 (FY2019 NDAA, Public Law 115-232), the FCC Covered List (https://www.fcc.gov/supplychain/coveredlist), and FAR 52.204-25. These restrictions legally bind federal agencies/contractors/grant recipients, not private commercial purchasers generally - see /REFERENCES.md section 4 for the full, accurate scope. restricted_countries, eol_dates, and single_source_components are SELF-BUILT ILLUSTRATIVE DATA for this prototype, not extracted from OFAC, BIS, or any vendor's real lifecycle records. The restricted_countries list is modeled on the general shape of OFAC sanctions programs (https://ofac.treasury.gov/sanctions-programs-and-country-information) but the specific list here is our own for demo purposes - do not present it as OFAC's live list. See /REFERENCES.md for full citations and known source conflicts (e.g. Syria's current sanctions status is disputed across current sources).",
+  "restricted_countries": ["RU", "KP", "IR", "SY"],
+  "restricted_vendors": [
+    {"vendor": "Hikvision", "reason": "On multiple national restricted-entity lists for critical infrastructure procurement."},
+    {"vendor": "Dahua", "reason": "On multiple national restricted-entity lists for critical infrastructure procurement."}
+  ],
+  "eol_dates": {
+    "AMI:BMC Firmware": "2024-06-30",
+    "Aspeed:BMC Firmware": "2026-01-01",
+    "Broadcom:NIC Firmware": "2027-01-01",
+    "Broadcom:RAID Controller Firmware": "2025-03-01",
+    "AMI:UEFI Firmware": "2026-01-01",
+    "Infineon:TPM Firmware": "2027-06-01",
+    "Nuvoton:TPM Firmware": "2028-01-01",
+    "AMI:Bootloader Firmware": "2025-12-01",
+    "Broadcom:PCIe Switch Firmware": "2026-06-01"
+  },
+  "single_source_components": [
+    "BMC Firmware",
+    "RAID Controller Firmware"
+  ]
+}

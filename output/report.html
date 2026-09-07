@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Supply Chain Risk Report</title>
+<style>
+  :root {
+    --bg: #0b1220; --panel: #131d30; --panel-2: #16233a; --border: #223252;
+    --text: #e6edf3; --text-dim: #93a5c2; --accent: #6ee7c9;
+    --red: #ff6b6b; --red-bg: #2a1418; --amber: #f0b74d; --amber-bg: #2a2114; --green: #6ee7c9; --green-bg: #12261d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg); color: var(--text); margin: 0; padding: 32px 40px 64px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 15px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;
+       letter-spacing: 0.06em; margin: 36px 0 14px; }
+  .subtitle { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }
+
+  .summary {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+  }
+  .summary-meta { font-size: 13px; color: var(--text-dim); }
+  .summary-meta div { margin-bottom: 3px; }
+  .summary-score { text-align: right; }
+  .summary-score .num { font-size: 40px; font-weight: 800; line-height: 1; }
+  .summary-score .num-max { font-size: 16px; color: var(--text-dim); font-weight: 500; }
+  .summary-counts { display:flex; gap: 20px; font-size: 13px; color: var(--text-dim); }
+  .summary-counts b { color: var(--text); }
+
+  .pill {
+    display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px;
+    font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap;
+  }
+  .pill-do-not-buy { background: var(--red-bg); color: var(--red); border: 1px solid #542229; }
+  .pill-needs-review { background: var(--amber-bg); color: var(--amber); border: 1px solid #5a4520; }
+  .pill-safe-to-buy { background: var(--green-bg); color: var(--green); border: 1px solid #1f4536; }
+
+  .finding-card {
+    background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--border);
+    border-radius: 10px; padding: 16px 20px; margin-bottom: 12px;
+  }
+  .verdict-border-do-not-buy { border-left-color: var(--red); }
+  .verdict-border-needs-review { border-left-color: var(--amber); }
+  .verdict-border-safe-to-buy { border-left-color: var(--green); }
+
+  .finding-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .finding-head-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .comp-name { font-size: 16px; font-weight: 700; }
+  .comp-meta { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }
+  .risk-score { font-size: 20px; font-weight: 800; min-width: 56px; text-align: right; }
+  .risk-score-max { font-size: 12px; font-weight: 500; color: var(--text-dim); }
+  .finding-units { font-size: 12.5px; color: var(--text-dim); margin: 10px 0 2px; }
+
+  .finding-body { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13.5px; }
+  .breakdown { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; color: var(--text-dim); font-size: 12.5px; margin-bottom: 8px; }
+  .section-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+                     color: var(--text-dim); margin: 10px 0 4px; }
+  ul { margin: 0 0 4px; padding-left: 20px; }
+  li { margin-bottom: 6px; }
+  .cve-ul { list-style: none; padding-left: 0; }
+  .cve-ul li { background: var(--panel-2); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; }
+  .cve-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; font-weight: 700; }
+  .cve-desc { margin-top: 4px; color: var(--text-dim); font-size: 12.5px; }
+  .cve-desc a { color: var(--accent); }
+  .badge { font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.03em; }
+  .badge-real { background: #12261d; color: var(--green); }
+  .badge-sim { background: #2a2114; color: var(--amber); }
+  .sev { font-size: 11.5px; color: var(--text-dim); }
+  .sev-critical { color: var(--red); }
+  .sev-high { color: var(--amber); }
+  .mitigation { margin-top: 10px; }
+  .mitigation .section-label { margin-top: 0; }
+</style></head>
+<body>
+<div class="wrap">
+  <h1>Supply Chain Risk Report</h1>
+  <div class="subtitle">Source: /home/claude/scrisk/output/cleaned_bom.csv · Generated 2026-09-07T13:50:04.997153Z</div>
+
+  <div class="summary">
+    <div class="summary-meta">
+      <div class="summary-counts">
+        <span>Scored: <b>24</b></span>
+        <span>Unscored: <b>36</b></span>
+        <span>Ingestion errors: <b>0</b></span>
+      </div>
+    </div>
+    <div class="summary-score">
+      <span class="pill pill-do-not-buy">DO NOT BUY</span>
+      <div class="num">62.3<span class="num-max"> / 100</span></div>
+    </div>
+  </div>
+
+  <h2>Findings — ranked by risk</h2>
+  
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">BMC Firmware</div>
+              <div class="comp-meta">AMI · v12.4 · US</div>
+            </div>
+            <div class="finding-head-right">
+              <span class="pill pill-needs-review">NEEDS REVIEW</span>
+              <span class="risk-score">69.6<span class="risk-score-max">/100</span></span>
+            </div>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b> (4 units)</div>
+          <div class="finding-body">
+            <div class="breakdown">
+              <span>Match: <b>matched</b> (confidence 1.0)</span>
+              <span class="breakdown-terms">CVE 54.6 + Vendor/Origin 0.0 + Lifecycle 15</span>
+            </div>
+            <div class='section-label'>Known vulnerabilities</div><ul class='cve-ul'><li><span class='cve-id'>CVE-2023-34329</span> <span class='badge badge-real'>REAL</span> <span class='sev sev-critical'>CRITICAL · CVSS 9.1</span><div class='cve-desc'>Authentication bypass via HTTP header spoofing in AMI MegaRAC BMC's Redfish host interface. Part of the 'BMC&C' vulnerability set disclosed by Eclypsium; affects devices from AMD, Asus, Dell EMC, Gigabyte, HPE, Lenovo, Nvidia, and others using MegaRAC SP-X. — <a href="https://eclypsium.com/research/bmcc-lights-out-forever/" target="_blank">source</a></div></li><li><span class='cve-id'>CVE-2023-34330</span> <span class='badge badge-real'>REAL</span> <span class='sev sev-high'>HIGH · CVSS 8.2</span><div class='cve-desc'>Code injection via AMI MegaRAC's Dynamic Redfish Extension interface, allowing arbitrary code execution as root on the BMC chip. Chains with CVE-2023-34329 for full remote takeover. — <a href="https://eclypsium.com/research/bmcc-lights-out-forever/" target="_blank">source</a></div></li></ul>
+            
+            <div class='section-label'>Lifecycle flags</div><ul><li>Component reached end-of-life on 2024-06-30 - no further security patches expected.</li><li>'BMC Firmware' is flagged as a single-source dependency - no qualified alternate vendor on record.</li></ul>
+            <div class="mitigation"><span class="section-label">Suggested mitigation</span>Patch/upgrade BMC Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched.</div>
+          </div>
+        </div>
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">NIC Firmware</div>
+              <div class="comp-meta">Broadcom · v21.60 · US</div>
+            </div>
+            <div class="finding-head-right">
+              <span class="pill pill-needs-review">NEEDS REVIEW</span>
+              <span class="risk-score">62.1<span class="risk-score-max">/100</span></span>
+            </div>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b> (4 units)</div>
+          <div class="finding-body">
+            <div class="breakdown">
+              <span>Match: <b>matched</b> (confidence 1.0)</span>
+              <span class="breakdown-terms">CVE 54.6 + Vendor/Origin 0.0 + Lifecycle 7.5</span>
+            </div>
+            <div class='section-label'>Known vulnerabilities</div><ul class='cve-ul'><li><span class='cve-id'>CVE-2021-3711-SIM</span> <span class='badge badge-sim'>SIMULATED</span> <span class='sev sev-critical'>CRITICAL · CVSS 9.1</span><div class='cve-desc'>SIMULATED for prototype coverage - no convenient real public CVE found for this exact component/vendor pairing during research. Shape (buffer overflow in NIC firmware packet parsing, remote code execution) is representative of real firmware CVE patterns, not copied from a specific advisory.</div></li></ul>
+            
+            <div class='section-label'>Lifecycle flags</div><ul><li>Component approaching end-of-life (2027-01-01) within 6 months.</li></ul>
+            <div class="mitigation"><span class="section-label">Suggested mitigation</span>Patch/upgrade NIC Firmware (Broadcom) past the affected version range, or isolate on a management-only network segment until patched.</div>
+          </div>
+        </div>
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">RAID Controller Firmware</div>
+              <div class="comp-meta">Broadcom · v52.16.0 · SG</div>
+            </div>
+            <div class="finding-head-right">
+              <span class="pill pill-needs-review">NEEDS REVIEW</span>
+              <span class="risk-score">61.8<span class="risk-score-max">/100</span></span>
+            </div>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b> (4 units)</div>
+          <div class="finding-body">
+            <div class="breakdown">
+              <span>Match: <b>matched</b> (confidence 1.0)</span>
+              <span class="breakdown-terms">CVE 46.8 + Vendor/Origin 0.0 + Lifecycle 15</span>
+            </div>
+            <div class='section-label'>Known vulnerabilities</div><ul class='cve-ul'><li><span class='cve-id'>CVE-2023-22809-SIM</span> <span class='badge badge-sim'>SIMULATED</span> <span class='sev sev-high'>HIGH · CVSS 7.8</span><div class='cve-desc'>SIMULATED for prototype coverage - fabricated privilege-escalation scenario in RAID controller management utility via crafted configuration file. Not a real, resolvable CVE record.</div></li></ul>
+            
+            <div class='section-label'>Lifecycle flags</div><ul><li>Component reached end-of-life on 2025-03-01 - no further security patches expected.</li><li>'RAID Controller Firmware' is flagged as a single-source dependency - no qualified alternate vendor on record.</li></ul>
+            <div class="mitigation"><span class="section-label">Suggested mitigation</span>Patch/upgrade RAID Controller Firmware (Broadcom) past the affected version range, or isolate on a management-only network segment until patched.</div>
+          </div>
+        </div>
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">UEFI Firmware</div>
+              <div class="comp-meta">AMI · v5.19 · US</div>
+            </div>
+            <div class="finding-head-right">
+              <span class="pill pill-needs-review">NEEDS REVIEW</span>
+              <span class="risk-score">56.7<span class="risk-score-max">/100</span></span>
+            </div>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03</b> (3 units)</div>
+          <div class="finding-body">
+            <div class="breakdown">
+              <span>Match: <b>matched</b> (confidence 1.0)</span>
+              <span class="breakdown-terms">CVE 49.2 + Vendor/Origin 0.0 + Lifecycle 7.5</span>
+            </div>
+            <div class='section-label'>Known vulnerabilities</div><ul class='cve-ul'><li><span class='cve-id'>CVE-2022-31160-SIM</span> <span class='badge badge-sim'>SIMULATED</span> <span class='sev sev-high'>HIGH · CVSS 8.2</span><div class='cve-desc'>SIMULATED for prototype coverage - fabricated SMM memory corruption scenario in UEFI firmware. Real UEFI/BIOS supply-chain vulnerability classes this is modeled on include the real, published 'LogoFAIL' (2023, multiple UEFI vendors) and 'PixieFail' (2023, network boot stack) vulnerability sets - not copied from either, but representative of the same vulnerability class.</div></li></ul>
+            
+            <div class='section-label'>Lifecycle flags</div><ul><li>Component reached end-of-life on 2026-01-01 - no further security patches expected.</li></ul>
+            <div class="mitigation"><span class="section-label">Suggested mitigation</span>Patch/upgrade UEFI Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched.</div>
+          </div>
+        </div>
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">Bootloader Firmware</div>
+              <div class="comp-meta">AMI · v3.1 · US</div>
+            </div>
+            <div class="finding-head-right">
+              <span class="pill pill-needs-review">NEEDS REVIEW</span>
+              <span class="risk-score">52.5<span class="risk-score-max">/100</span></span>
+            </div>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b> (4 units)</div>
+          <div class="finding-body">
+            <div class="breakdown">
+              <span>Match: <b>matched</b> (confidence 1.0)</span>
+              <span class="breakdown-terms">CVE 45.0 + Vendor/Origin 0.0 + Lifecycle 7.5</span>
+            </div>
+            <div class='section-label'>Known vulnerabilities</div><ul class='cve-ul'><li><span class='cve-id'>CVE-2022-21894-SIM</span> <span class='badge badge-sim'>SIMULATED</span> <span class='sev sev-high'>HIGH · CVSS 7.5</span><div class='cve-desc'>SIMULATED for prototype coverage - fabricated Secure Boot bypass scenario. Not a real, resolvable CVE record.</div></li></ul>
+            
+            <div class='section-label'>Lifecycle flags</div><ul><li>Component reached end-of-life on 2025-12-01 - no further security patches expected.</li></ul>
+            <div class="mitigation"><span class="section-label">Suggested mitigation</span>Patch/upgrade Bootloader Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched.</div>
+          </div>
+        </div>
+        <div class="finding-card verdict-border-do-not-buy">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">Network Camera Module</div>
+              <div class="comp-meta">Hikvision · vDS-2CD2143 · CN</div>
+            </div>
+            <div class="finding-head-right">
+              <span class="pill pill-do-not-buy">DO NOT BUY</span>
+              <span class="risk-score">25.0<span class="risk-score-max">/100</span></span>
+            </div>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b> (4 units)</div>
+          <div class="finding-body">
+            <div class="breakdown">
+              <span>Match: <b>unmatched</b> (confidence 0.0)</span>
+              <span class="breakdown-terms">CVE 0.0 + Vendor/Origin 25 + Lifecycle 0.0</span>
+            </div>
+            
+            <div class='section-label'>Policy flags</div><ul><li>Vendor 'Hikvision' is on the restricted-vendor list: On multiple national restricted-entity lists for critical infrastructure procurement.</li></ul>
+            
+            <div class="mitigation"><span class="section-label">Suggested mitigation</span>Source an equivalent Network Camera Module from a non-restricted vendor/origin before procurement approval.</div>
+          </div>
+        </div>
+        <div class="finding-card verdict-border-safe-to-buy">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">UEFI Firmware</div>
+              <div class="comp-meta">AMI · v6.0 · US</div>
+            </div>
+            <div class="finding-head-right">
+              <span class="pill pill-safe-to-buy">SAFE TO BUY</span>
+              <span class="risk-score">7.5<span class="risk-score-max">/100</span></span>
+            </div>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-04</b></div>
+          <div class="finding-body">
+            <div class="breakdown">
+              <span>Match: <b>unmatched</b> (confidence 0.0)</span>
+              <span class="breakdown-terms">CVE 0.0 + Vendor/Origin 0.0 + Lifecycle 7.5</span>
+            </div>
+            
+            
+            <div class='section-label'>Lifecycle flags</div><ul><li>Component reached end-of-life on 2026-01-01 - no further security patches expected.</li></ul>
+            <div class="mitigation"><span class="section-label">Suggested mitigation</span>Qualify an alternate vendor for UEFI Firmware and plan replacement ahead of EOL.</div>
+          </div>
+        </div>
+
+  <h2>Unscored / unknown components — require manual review</h2>
+  
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">CPU</div>
+              <div class="comp-meta">Intel · vXeon-8480+ · US</div>
+            </div>
+            <span class="pill pill-needs-review">NEEDS REVIEW</span>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b></div>
+          <div class="finding-body"><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div>
+        </div>
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">GPU</div>
+              <div class="comp-meta">NVIDIA · vH100-SXM5 · TW</div>
+            </div>
+            <span class="pill pill-needs-review">NEEDS REVIEW</span>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b></div>
+          <div class="finding-body"><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div>
+        </div>
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">Motherboard</div>
+              <div class="comp-meta">Supermicro · vX13-DPG · US</div>
+            </div>
+            <span class="pill pill-needs-review">NEEDS REVIEW</span>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b></div>
+          <div class="finding-body"><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div>
+        </div>
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">Power Supply Unit</div>
+              <div class="comp-meta">Delta Electronics · vDPS-2000AB · TW</div>
+            </div>
+            <span class="pill pill-needs-review">NEEDS REVIEW</span>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b></div>
+          <div class="finding-body"><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div>
+        </div>
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">Memory Module</div>
+              <div class="comp-meta">Samsung · vDDR5-4800-64GB · KR</div>
+            </div>
+            <span class="pill pill-needs-review">NEEDS REVIEW</span>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b></div>
+          <div class="finding-body"><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div>
+        </div>
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">TPM Module</div>
+              <div class="comp-meta">Nuvoton · v1.3.2 · TW</div>
+            </div>
+            <span class="pill pill-needs-review">NEEDS REVIEW</span>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b></div>
+          <div class="finding-body"><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div>
+        </div>
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">Cooling Fan Controller</div>
+              <div class="comp-meta">Foxconn · vFCX-200 · TW</div>
+            </div>
+            <span class="pill pill-needs-review">NEEDS REVIEW</span>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b></div>
+          <div class="finding-body"><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div>
+        </div>
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">PCIe Switch</div>
+              <div class="comp-meta">Broadcom · vPEX89104 · US</div>
+            </div>
+            <span class="pill pill-needs-review">NEEDS REVIEW</span>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b></div>
+          <div class="finding-body"><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div>
+        </div>
+        <div class="finding-card verdict-border-needs-review">
+          <div class="finding-head">
+            <div>
+              <div class="comp-name">Custom Sensor Board</div>
+              <div class="comp-meta">Rev3 Labs · v2.1 · ZZ</div>
+            </div>
+            <span class="pill pill-needs-review">NEEDS REVIEW</span>
+          </div>
+          <div class="finding-units">Affects: <b>NODE-01, NODE-02, NODE-03, NODE-04</b></div>
+          <div class="finding-body"><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div>
+        </div>
+</div>
+</body></html>
