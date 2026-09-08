@@ -25,6 +25,18 @@ a bug, left sidebar), use the dropdown at the top to pick "1. Clean the BOM
 only" or "2. Score the BOM only", and click the green ▷ play arrow. No typing
 required.
 
+## Manual Web Upload Portal
+
+You can upload and score any server BOM file (CycloneDX JSON or CSV) interactively using the built-in local web portal (standard library only, zero extra dependencies):
+
+```bash
+python server.py
+# or
+python main.py --serve
+```
+
+This launches the local server at `http://localhost:8080`, opens your browser, and provides drag-and-drop file upload, format detection, one-click sample testing, and an interactive report viewer.
+
 ## Running from a terminal instead
 
 Requires Python 3.8+, no external packages (standard library only).

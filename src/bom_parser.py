@@ -90,27 +90,42 @@ def _properties_by_name(comp):
 
 def _org_name(entity):
     if isinstance(entity, dict):
-        return (entity.get("name") or "").strip() or None
+        return (str(entity.get("name") or "")).strip() or None
+    if isinstance(entity, str):
+        return entity.strip() or None
+    if isinstance(entity, list) and entity:
+        first = entity[0]
+        if isinstance(first, dict):
+            return (str(first.get("name") or "")).strip() or None
+        if isinstance(first, str):
+            return first.strip() or None
     return None
 
 
 def _org_country(entity):
+    if isinstance(entity, list) and entity:
+        entity = entity[0]
     if not isinstance(entity, dict):
         return None
     address = entity.get("address")
     if isinstance(address, dict):
-        country = (address.get("country") or "").strip()
-        return country or None
+        country = str(address.get("country") or address.get("countryCode") or "").strip()
+        if country:
+            return country
+    elif isinstance(address, str) and address.strip():
+        return address.strip()
+    direct_country = str(entity.get("country") or "").strip()
+    if direct_country:
+        return direct_country
     return None
 
 
 def _vendor_from_comp(comp):
-    publisher = comp.get("publisher")
-    publisher_name = publisher.strip() if isinstance(publisher, str) else None
     return (
         _org_name(comp.get("supplier"))
         or _org_name(comp.get("manufacturer"))
-        or publisher_name
+        or _org_name(comp.get("manufacturers"))
+        or _org_name(comp.get("publisher"))
         or None
     )
 
@@ -120,8 +135,13 @@ def _origin_from_comp(comp):
     for key in ORIGIN_PROPERTY_NAMES:
         value = props.get(key)
         if value:
-            return value
-    return _org_country(comp.get("manufacturer")) or _org_country(comp.get("supplier"))
+            return str(value).strip()
+    return (
+        _org_country(comp.get("supplier"))
+        or _org_country(comp.get("manufacturer"))
+        or _org_country(comp.get("manufacturers"))
+        or None
+    )
 
 
 def _first_property(comp, names):
@@ -144,13 +164,20 @@ def _walk_components(items, collected):
 
 
 def _append_component(components, errors, comp, index):
-    name = (comp.get("name") or "").strip()
+    name = (str(comp.get("name") or "")).strip()
     vendor = _vendor_from_comp(comp)
-    version = (comp.get("version") or "").strip()
-    if not all([name, vendor, version]):
+    version = (str(comp.get("version") or "")).strip()
+    missing = []
+    if not name:
+        missing.append("component_name")
+    if not vendor:
+        missing.append("vendor")
+    if not version:
+        missing.append("version")
+    if missing:
         errors.append({
             "row": index,
-            "issue": "missing required field(s) in component entry",
+            "issue": f"missing required field(s): {missing}",
             "raw": comp,
         })
         return
@@ -206,6 +233,8 @@ def parse_cyclonedx(path):
             _append_component(components, errors, metadata_component, "metadata.component")
 
     flat = []
+    if isinstance(metadata_component, dict) and metadata_component.get("components"):
+        _walk_components(metadata_component.get("components"), flat)
     _walk_components(data.get("components") or [], flat)
     for i, comp in enumerate(flat):
         _append_component(components, errors, comp, i)

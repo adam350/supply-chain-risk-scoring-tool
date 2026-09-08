@@ -81,6 +81,12 @@ if __name__ == "__main__":
     parser.add_argument("--out", default="output", help="Output directory for reports")
     parser.add_argument("--cve-db", default="data/cve_database.json")
     parser.add_argument("--rules", default="data/rules.json")
+    parser.add_argument("--serve", action="store_true", help="Start the local web upload interface")
+    parser.add_argument("--port", type=int, default=8080, help="Port for the web interface (default: 8080)")
     args = parser.parse_args()
 
-    run(args.bom, args.out, args.cve_db, args.rules)
+    if args.serve:
+        from server import run_server
+        run_server(port=args.port)
+    else:
+        run(args.bom, args.out, args.cve_db, args.rules)
