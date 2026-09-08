@@ -68,7 +68,12 @@ scrisk/
 - `sample_bom.csv` / `sample_bom_cyclonedx.json` — smaller, already-clean
   alternative BOMs. Not run by default; pass `--bom data/sample_bom_cyclonedx.json`
   to `main.py` if you want to demonstrate the other supported format (skip
-  `clean_bom.py` for these — they're already clean).
+  `clean_bom.py` for these — they're already clean). CycloneDX JSON is mapped
+  into the same rows as CSV: `name`; vendor from `supplier`, then
+  `manufacturer`, then `publisher`; `version`; origin from an `origin_country`
+  property (or aliases) or from the manufacturer/supplier address country.
+  Nested components are flattened. Files that are not `bomFormat: CycloneDX`
+  are rejected.
 
 ## What it does
 
@@ -77,7 +82,7 @@ scrisk/
    codes. Produces a separate cleaning report so nothing is silently dropped
    without a visible reason.
 2. Parses the cleaned BOM (CSV or CycloneDX JSON) into a normalized
-   component list.
+   component list. CycloneDX skips the CSV cleaning step.
 3. Matches each component against a local CVE dataset (exact + fuzzy) —
    including **real, verified CVEs** for actual BMC firmware vulnerabilities
    (clearly labeled `real` vs `simulated` per entry — see `REFERENCES.md`).

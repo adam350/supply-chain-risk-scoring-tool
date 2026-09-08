@@ -532,8 +532,7 @@ def _render_presentation_html(report):
   h2 {{ font-size: 20px; font-weight: 750; margin: 0 0 6px; letter-spacing: -0.01em; }}
   h3 {{ font-size: 13px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;
         letter-spacing: 0.06em; margin: 22px 0 10px; }}
-  .subtitle {{ color: var(--text-dim); font-size: 14px; margin-bottom: 6px; }}
-  .generated {{ color: var(--text-dim); font-size: 12px; margin-bottom: 18px; }}
+  .subtitle {{ color: var(--text-dim); font-size: 14px; margin-bottom: 18px; }}
   .nav {{
     display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px;
   }}
@@ -649,7 +648,6 @@ def _render_presentation_html(report):
 <div class="wrap">
   <h1>{_e(p.get('title') or 'Supply Chain Risk Report')}</h1>
   <div class="subtitle">{_e(p.get('subtitle') or '')}</div>
-  <div class="generated">Source: {_e(report.get('bom_source'))} · Generated {_e(report.get('generated_at'))}</div>
   <nav class="nav">{nav}</nav>
 
   <section class="page" id="page-1">
@@ -786,10 +784,9 @@ def _render_legacy_html(report):
     line-height: 1.5;
   }}
   .wrap {{ max-width: 980px; margin: 0 auto; }}
-  h1 {{ font-size: 22px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }}
+  h1 {{ font-size: 22px; font-weight: 700; margin: 0 0 24px; letter-spacing: -0.01em; }}
   h2 {{ font-size: 15px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;
        letter-spacing: 0.06em; margin: 36px 0 14px; }}
-  .subtitle {{ color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }}
   .summary {{
     background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
     padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
@@ -839,7 +836,6 @@ def _render_legacy_html(report):
 <body>
 <div class="wrap">
   <h1>Supply Chain Risk Report</h1>
-  <div class="subtitle">Source: {_e(report['bom_source'])} · Generated {_e(report['generated_at'])}</div>
   <div class="summary">
     <div class="summary-meta">
       <div class="summary-counts">

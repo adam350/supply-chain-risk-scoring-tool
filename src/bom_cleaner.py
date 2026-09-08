@@ -19,8 +19,9 @@ where a security reviewer wouldn't think to look for them.
 """
 
 import csv
-import re
 from pathlib import Path
+
+from normalize import normalize_country as _normalize_country
 
 
 # Placeholder/test values that mean "this isn't real data" regardless of casing
@@ -30,35 +31,11 @@ JUNK_VALUES = {
     "component_name", "vendor",  # guards against an accidentally re-pasted header row
 }
 
-# Common full country names -> ISO-2, so a human typing "United States" instead
-# of "US" doesn't get treated as a data error. Not exhaustive - anything not in
-# here that also isn't a 2-letter code is flagged for manual correction rather
-# than guessed at.
-COUNTRY_NAME_TO_ISO2 = {
-    "united states": "US", "usa": "US", "u.s.a.": "US", "u.s.": "US",
-    "taiwan": "TW", "china": "CN", "south korea": "KR", "korea": "KR",
-    "singapore": "SG", "japan": "JP", "germany": "DE", "india": "IN",
-    "vietnam": "VN", "mexico": "MX", "malaysia": "MY", "philippines": "PH",
-    "thailand": "TH", "united kingdom": "GB", "uk": "GB",
-}
-
 REQUIRED_FIELDS = ["component_name", "vendor", "version"]
 
 
 def _is_junk(value):
     return (value or "").strip().lower() in JUNK_VALUES
-
-
-def _normalize_country(value):
-    v = (value or "").strip()
-    if not v:
-        return "UNKNOWN", None
-    if re.fullmatch(r"[A-Za-z]{2}", v):
-        return v.upper(), None
-    mapped = COUNTRY_NAME_TO_ISO2.get(v.lower())
-    if mapped:
-        return mapped, f"origin_country '{v}' normalized to ISO-2 '{mapped}'"
-    return v, f"origin_country '{v}' is not a recognized ISO-2 code or known country name - left as-is, flag for manual correction"
 
 
 def clean_bom_csv(raw_path):
@@ -189,10 +166,9 @@ def render_cleaning_report_html(raw_path, cleaned_rows, cleaning_log, out_path):
     background: var(--bg); color: var(--text); margin: 0; padding: 32px 40px 64px; line-height: 1.5;
   }}
   .wrap {{ max-width: 860px; margin: 0 auto; }}
-  h1 {{ font-size: 22px; font-weight: 700; margin: 0 0 4px; }}
+  h1 {{ font-size: 22px; font-weight: 700; margin: 0 0 24px; }}
   h2 {{ font-size: 15px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;
        letter-spacing: 0.06em; margin: 32px 0 14px; }}
-  .subtitle {{ color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }}
 
   .summary {{ background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
               padding: 20px 24px; display: flex; gap: 28px; flex-wrap: wrap; }}
@@ -221,7 +197,6 @@ def render_cleaning_report_html(raw_path, cleaned_rows, cleaning_log, out_path):
 <body>
 <div class="wrap">
   <h1>BOM Cleaning Report</h1>
-  <div class="subtitle">Source: {raw_path}</div>
 
   <div class="summary">
     <div class="stat stat-removed"><div class="num">{len(removed)}</div><div class="label">Rows removed</div></div>
