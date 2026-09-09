@@ -1,24 +1,13 @@
 {
-  "generated_at": "2026-09-08T19:37:04.965545Z",
-  "bom_source": "data/sample_bom_cyclonedx.json",
-  "ingestion_errors": [
-    {
-      "row": 1,
-      "issue": "missing required field(s): ['vendor', 'version']",
-      "raw": {
-        "bom-ref": "pkg:library/ami/megarac-sp-x",
-        "type": "library",
-        "name": "MegaRAC SP-X",
-        "description": "Nested assembly fragment without vendor/version; flattened then skipped."
-      }
-    }
-  ],
+  "generated_at": "2026-09-09T06:17:33.308654Z",
+  "bom_source": "/Users/adamkyler/supply-chain-risk-scoring-tool/output/cleaned_bom.csv",
+  "ingestion_errors": [],
   "aggregate": {
-    "aggregate_score": 62.7,
+    "aggregate_score": 62.3,
     "max_component_score": 69.6,
-    "mean_component_score": 52.2,
-    "unknown_count": 2,
-    "scored_count": 3
+    "mean_component_score": 51.3,
+    "unknown_count": 36,
+    "scored_count": 24
   },
   "findings_ranked": [
     {
@@ -27,9 +16,12 @@
       "version": "12.4",
       "origin_country": "US",
       "affected_units": [
-        "UNSPECIFIED"
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
       ],
-      "unit_count": 1,
+      "unit_count": 4,
       "risk_score": 69.6,
       "score_breakdown": {
         "cve_term": 54.6,
@@ -69,9 +61,12 @@
       "version": "21.60",
       "origin_country": "US",
       "affected_units": [
-        "UNSPECIFIED"
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
       ],
-      "unit_count": 1,
+      "unit_count": 4,
       "risk_score": 62.1,
       "score_breakdown": {
         "cve_term": 54.6,
@@ -97,14 +92,125 @@
       "suggested_mitigation": "Patch/upgrade NIC Firmware (Broadcom) past the affected version range, or isolate on a management-only network segment until patched."
     },
     {
+      "component_name": "RAID Controller Firmware",
+      "vendor": "Broadcom",
+      "version": "52.16.0",
+      "origin_country": "SG",
+      "affected_units": [
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
+      ],
+      "unit_count": 4,
+      "risk_score": 61.8,
+      "score_breakdown": {
+        "cve_term": 46.8,
+        "vendor_origin_term": 0.0,
+        "lifecycle_term": 15
+      },
+      "match_status": "matched",
+      "match_confidence": 1.0,
+      "matched_cves": [
+        {
+          "id": "CVE-2023-22809-SIM",
+          "cvss": 7.8,
+          "severity": "HIGH",
+          "description": "SIMULATED for prototype coverage - fabricated privilege-escalation scenario in RAID controller management utility via crafted configuration file. Not a real, resolvable CVE record.",
+          "provenance": "simulated",
+          "source_url": null
+        }
+      ],
+      "policy_flags": [],
+      "lifecycle_flags": [
+        "Component reached end-of-life on 2025-03-01 - no further security patches expected.",
+        "'RAID Controller Firmware' is flagged as a single-source dependency - no qualified alternate vendor on record."
+      ],
+      "suggested_mitigation": "Patch/upgrade RAID Controller Firmware (Broadcom) past the affected version range, or isolate on a management-only network segment until patched."
+    },
+    {
+      "component_name": "UEFI Firmware",
+      "vendor": "AMI",
+      "version": "5.19",
+      "origin_country": "US",
+      "affected_units": [
+        "NODE-01",
+        "NODE-02",
+        "NODE-03"
+      ],
+      "unit_count": 3,
+      "risk_score": 56.7,
+      "score_breakdown": {
+        "cve_term": 49.2,
+        "vendor_origin_term": 0.0,
+        "lifecycle_term": 7.5
+      },
+      "match_status": "matched",
+      "match_confidence": 1.0,
+      "matched_cves": [
+        {
+          "id": "CVE-2022-31160-SIM",
+          "cvss": 8.2,
+          "severity": "HIGH",
+          "description": "SIMULATED for prototype coverage - fabricated SMM memory corruption scenario in UEFI firmware. Real UEFI/BIOS supply-chain vulnerability classes this is modeled on include the real, published 'LogoFAIL' (2023, multiple UEFI vendors) and 'PixieFail' (2023, network boot stack) vulnerability sets - not copied from either, but representative of the same vulnerability class.",
+          "provenance": "simulated",
+          "source_url": null
+        }
+      ],
+      "policy_flags": [],
+      "lifecycle_flags": [
+        "Component reached end-of-life on 2026-01-01 - no further security patches expected."
+      ],
+      "suggested_mitigation": "Patch/upgrade UEFI Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched."
+    },
+    {
+      "component_name": "Bootloader Firmware",
+      "vendor": "AMI",
+      "version": "3.1",
+      "origin_country": "US",
+      "affected_units": [
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
+      ],
+      "unit_count": 4,
+      "risk_score": 52.5,
+      "score_breakdown": {
+        "cve_term": 45.0,
+        "vendor_origin_term": 0.0,
+        "lifecycle_term": 7.5
+      },
+      "match_status": "matched",
+      "match_confidence": 1.0,
+      "matched_cves": [
+        {
+          "id": "CVE-2022-21894-SIM",
+          "cvss": 7.5,
+          "severity": "HIGH",
+          "description": "SIMULATED for prototype coverage - fabricated Secure Boot bypass scenario. Not a real, resolvable CVE record.",
+          "provenance": "simulated",
+          "source_url": null
+        }
+      ],
+      "policy_flags": [],
+      "lifecycle_flags": [
+        "Component reached end-of-life on 2025-12-01 - no further security patches expected."
+      ],
+      "suggested_mitigation": "Patch/upgrade Bootloader Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched."
+    },
+    {
       "component_name": "Network Camera Module",
       "vendor": "Hikvision",
       "version": "DS-2CD2143",
       "origin_country": "CN",
       "affected_units": [
-        "UNSPECIFIED"
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
       ],
-      "unit_count": 1,
+      "unit_count": 4,
       "risk_score": 25.0,
       "score_breakdown": {
         "cve_term": 0.0,
@@ -119,18 +225,150 @@
       ],
       "lifecycle_flags": [],
       "suggested_mitigation": "Source an equivalent Network Camera Module from a non-restricted vendor/origin before procurement approval."
+    },
+    {
+      "component_name": "UEFI Firmware",
+      "vendor": "AMI",
+      "version": "6.0",
+      "origin_country": "US",
+      "affected_units": [
+        "NODE-04"
+      ],
+      "unit_count": 1,
+      "risk_score": 7.5,
+      "score_breakdown": {
+        "cve_term": 0.0,
+        "vendor_origin_term": 0.0,
+        "lifecycle_term": 7.5
+      },
+      "match_status": "unmatched",
+      "match_confidence": 0.0,
+      "matched_cves": [],
+      "policy_flags": [],
+      "lifecycle_flags": [
+        "Component reached end-of-life on 2026-01-01 - no further security patches expected."
+      ],
+      "suggested_mitigation": "Qualify an alternate vendor for UEFI Firmware and plan replacement ahead of EOL."
     }
   ],
   "unscored_components": [
+    {
+      "component_name": "CPU",
+      "vendor": "Intel",
+      "version": "Xeon-8480+",
+      "origin_country": "US",
+      "affected_units": [
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
+      ],
+      "unit_count": 4,
+      "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+      "action_required": "Manual review required before procurement approval."
+    },
+    {
+      "component_name": "GPU",
+      "vendor": "NVIDIA",
+      "version": "H100-SXM5",
+      "origin_country": "TW",
+      "affected_units": [
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
+      ],
+      "unit_count": 4,
+      "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+      "action_required": "Manual review required before procurement approval."
+    },
+    {
+      "component_name": "Motherboard",
+      "vendor": "Supermicro",
+      "version": "X13-DPG",
+      "origin_country": "US",
+      "affected_units": [
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
+      ],
+      "unit_count": 4,
+      "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+      "action_required": "Manual review required before procurement approval."
+    },
+    {
+      "component_name": "Power Supply Unit",
+      "vendor": "Delta Electronics",
+      "version": "DPS-2000AB",
+      "origin_country": "TW",
+      "affected_units": [
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
+      ],
+      "unit_count": 4,
+      "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+      "action_required": "Manual review required before procurement approval."
+    },
+    {
+      "component_name": "Memory Module",
+      "vendor": "Samsung",
+      "version": "DDR5-4800-64GB",
+      "origin_country": "KR",
+      "affected_units": [
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
+      ],
+      "unit_count": 4,
+      "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+      "action_required": "Manual review required before procurement approval."
+    },
     {
       "component_name": "TPM Module",
       "vendor": "Nuvoton",
       "version": "1.3.2",
       "origin_country": "TW",
       "affected_units": [
-        "UNSPECIFIED"
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
       ],
-      "unit_count": 1,
+      "unit_count": 4,
+      "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+      "action_required": "Manual review required before procurement approval."
+    },
+    {
+      "component_name": "Cooling Fan Controller",
+      "vendor": "Foxconn",
+      "version": "FCX-200",
+      "origin_country": "TW",
+      "affected_units": [
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
+      ],
+      "unit_count": 4,
+      "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+      "action_required": "Manual review required before procurement approval."
+    },
+    {
+      "component_name": "PCIe Switch",
+      "vendor": "Broadcom",
+      "version": "PEX89104",
+      "origin_country": "US",
+      "affected_units": [
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
+      ],
+      "unit_count": 4,
       "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
       "action_required": "Manual review required before procurement approval."
     },
@@ -140,9 +378,12 @@
       "version": "2.1",
       "origin_country": "ZZ",
       "affected_units": [
-        "UNSPECIFIED"
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
       ],
-      "unit_count": 1,
+      "unit_count": 4,
       "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
       "action_required": "Manual review required before procurement approval."
     }
@@ -151,18 +392,18 @@
     "title": "Supply Chain Security Assessment",
     "subtitle": "Infrastructure deployment risk assessment",
     "executive_summary": {
-      "risk_score": 62.7,
+      "risk_score": 62.3,
       "risk_level": "CRITICAL",
-      "total_components": 5,
-      "assessed_components": 3,
-      "unverified_components": 2,
-      "identified_high_or_critical_findings": 2,
+      "total_components": 60,
+      "assessed_components": 24,
+      "unverified_components": 36,
+      "identified_high_or_critical_findings": 5,
       "maximum_component_risk": 69.6,
-      "mean_component_risk": 52.2,
-      "affected_nodes": 0,
+      "mean_component_risk": 51.3,
+      "affected_nodes": 4,
       "policy_findings": 1,
-      "lifecycle_findings": 2,
-      "single_source_dependencies": 1,
+      "lifecycle_findings": 6,
+      "single_source_dependencies": 2,
       "headline": "High risk",
       "unknown_is_not_safe": true,
       "unknown_message": "No CVE match was found for these components, so they cannot be verified as safe or unsafe. Manual review is required before procurement approval."
@@ -182,7 +423,7 @@
           "version": "12.4",
           "risk_score": 69.6,
           "risk_level": "CRITICAL",
-          "affected_nodes": 1,
+          "affected_nodes": 4,
           "matched_cves": [
             "CVE-2023-34329",
             "CVE-2023-34330"
@@ -199,7 +440,7 @@
           "version": "21.60",
           "risk_score": 62.1,
           "risk_level": "CRITICAL",
-          "affected_nodes": 1,
+          "affected_nodes": 4,
           "matched_cves": [
             "CVE-2021-3711-SIM"
           ],
@@ -210,17 +451,79 @@
         },
         {
           "priority": 3,
+          "component": "RAID Controller Firmware",
+          "vendor": "Broadcom",
+          "version": "52.16.0",
+          "risk_score": 61.8,
+          "risk_level": "CRITICAL",
+          "affected_nodes": 4,
+          "matched_cves": [
+            "CVE-2023-22809-SIM"
+          ],
+          "highest_cvss": 7.8,
+          "policy_flags": 0,
+          "lifecycle_flags": 2,
+          "recommended_action": "Patch/upgrade RAID Controller Firmware (Broadcom) past the affected version range, or isolate on a management-only network segment until patched."
+        },
+        {
+          "priority": 4,
+          "component": "UEFI Firmware",
+          "vendor": "AMI",
+          "version": "5.19",
+          "risk_score": 56.7,
+          "risk_level": "HIGH",
+          "affected_nodes": 3,
+          "matched_cves": [
+            "CVE-2022-31160-SIM"
+          ],
+          "highest_cvss": 8.2,
+          "policy_flags": 0,
+          "lifecycle_flags": 1,
+          "recommended_action": "Patch/upgrade UEFI Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched."
+        },
+        {
+          "priority": 5,
+          "component": "Bootloader Firmware",
+          "vendor": "AMI",
+          "version": "3.1",
+          "risk_score": 52.5,
+          "risk_level": "HIGH",
+          "affected_nodes": 4,
+          "matched_cves": [
+            "CVE-2022-21894-SIM"
+          ],
+          "highest_cvss": 7.5,
+          "policy_flags": 0,
+          "lifecycle_flags": 1,
+          "recommended_action": "Patch/upgrade Bootloader Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched."
+        },
+        {
+          "priority": 6,
           "component": "Network Camera Module",
           "vendor": "Hikvision",
           "version": "DS-2CD2143",
           "risk_score": 25.0,
           "risk_level": "MEDIUM",
-          "affected_nodes": 1,
+          "affected_nodes": 4,
           "matched_cves": [],
           "highest_cvss": 0,
           "policy_flags": 1,
           "lifecycle_flags": 0,
           "recommended_action": "Source an equivalent Network Camera Module from a non-restricted vendor/origin before procurement approval."
+        },
+        {
+          "priority": 7,
+          "component": "UEFI Firmware",
+          "vendor": "AMI",
+          "version": "6.0",
+          "risk_score": 7.5,
+          "risk_level": "LOW",
+          "affected_nodes": 1,
+          "matched_cves": [],
+          "highest_cvss": 0,
+          "policy_flags": 0,
+          "lifecycle_flags": 1,
+          "recommended_action": "Qualify an alternate vendor for UEFI Firmware and plan replacement ahead of EOL."
         }
       ],
       "node_heatmap": [
@@ -229,24 +532,92 @@
           "vendor": "AMI",
           "risk_score": 69.6,
           "risk_level": "CRITICAL",
-          "affected_nodes": {}
+          "affected_nodes": {
+            "NODE-01": true,
+            "NODE-02": true,
+            "NODE-03": true,
+            "NODE-04": true
+          }
         },
         {
           "component": "NIC Firmware",
           "vendor": "Broadcom",
           "risk_score": 62.1,
           "risk_level": "CRITICAL",
-          "affected_nodes": {}
+          "affected_nodes": {
+            "NODE-01": true,
+            "NODE-02": true,
+            "NODE-03": true,
+            "NODE-04": true
+          }
+        },
+        {
+          "component": "RAID Controller Firmware",
+          "vendor": "Broadcom",
+          "risk_score": 61.8,
+          "risk_level": "CRITICAL",
+          "affected_nodes": {
+            "NODE-01": true,
+            "NODE-02": true,
+            "NODE-03": true,
+            "NODE-04": true
+          }
+        },
+        {
+          "component": "UEFI Firmware",
+          "vendor": "AMI",
+          "risk_score": 56.7,
+          "risk_level": "HIGH",
+          "affected_nodes": {
+            "NODE-01": true,
+            "NODE-02": true,
+            "NODE-03": true,
+            "NODE-04": false
+          }
+        },
+        {
+          "component": "Bootloader Firmware",
+          "vendor": "AMI",
+          "risk_score": 52.5,
+          "risk_level": "HIGH",
+          "affected_nodes": {
+            "NODE-01": true,
+            "NODE-02": true,
+            "NODE-03": true,
+            "NODE-04": true
+          }
         },
         {
           "component": "Network Camera Module",
           "vendor": "Hikvision",
           "risk_score": 25.0,
           "risk_level": "MEDIUM",
-          "affected_nodes": {}
+          "affected_nodes": {
+            "NODE-01": true,
+            "NODE-02": true,
+            "NODE-03": true,
+            "NODE-04": true
+          }
+        },
+        {
+          "component": "UEFI Firmware",
+          "vendor": "AMI",
+          "risk_score": 7.5,
+          "risk_level": "LOW",
+          "affected_nodes": {
+            "NODE-01": false,
+            "NODE-02": false,
+            "NODE-03": false,
+            "NODE-04": true
+          }
         }
       ],
-      "nodes": []
+      "nodes": [
+        "NODE-01",
+        "NODE-02",
+        "NODE-03",
+        "NODE-04"
+      ]
     },
     "remediation_priority": [
       {
@@ -267,11 +638,27 @@
       },
       {
         "priority": 3,
-        "component": "Network Camera Module",
-        "vendor": "Hikvision",
-        "risk_score": 25.0,
-        "risk_level": "MEDIUM",
-        "action": "Source an equivalent Network Camera Module from a non-restricted vendor/origin before procurement approval."
+        "component": "RAID Controller Firmware",
+        "vendor": "Broadcom",
+        "risk_score": 61.8,
+        "risk_level": "CRITICAL",
+        "action": "Patch/upgrade RAID Controller Firmware (Broadcom) past the affected version range, or isolate on a management-only network segment until patched."
+      },
+      {
+        "priority": 4,
+        "component": "UEFI Firmware",
+        "vendor": "AMI",
+        "risk_score": 56.7,
+        "risk_level": "HIGH",
+        "action": "Patch/upgrade UEFI Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched."
+      },
+      {
+        "priority": 5,
+        "component": "Bootloader Firmware",
+        "vendor": "AMI",
+        "risk_score": 52.5,
+        "risk_level": "HIGH",
+        "action": "Patch/upgrade Bootloader Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched."
       }
     ],
     "supply_chain_intelligence": {
@@ -292,6 +679,39 @@
           "flags": [
             "Component approaching end-of-life (2027-01-01) within 6 months."
           ]
+        },
+        {
+          "component": "RAID Controller Firmware",
+          "vendor": "Broadcom",
+          "risk_score": 61.8,
+          "flags": [
+            "Component reached end-of-life on 2025-03-01 - no further security patches expected.",
+            "'RAID Controller Firmware' is flagged as a single-source dependency - no qualified alternate vendor on record."
+          ]
+        },
+        {
+          "component": "UEFI Firmware",
+          "vendor": "AMI",
+          "risk_score": 56.7,
+          "flags": [
+            "Component reached end-of-life on 2026-01-01 - no further security patches expected."
+          ]
+        },
+        {
+          "component": "Bootloader Firmware",
+          "vendor": "AMI",
+          "risk_score": 52.5,
+          "flags": [
+            "Component reached end-of-life on 2025-12-01 - no further security patches expected."
+          ]
+        },
+        {
+          "component": "UEFI Firmware",
+          "vendor": "AMI",
+          "risk_score": 7.5,
+          "flags": [
+            "Component reached end-of-life on 2026-01-01 - no further security patches expected."
+          ]
         }
       ],
       "policy_risk": [
@@ -311,14 +731,77 @@
           "flags": [
             "'BMC Firmware' is flagged as a single-source dependency - no qualified alternate vendor on record."
           ]
+        },
+        {
+          "component": "RAID Controller Firmware",
+          "vendor": "Broadcom",
+          "flags": [
+            "'RAID Controller Firmware' is flagged as a single-source dependency - no qualified alternate vendor on record."
+          ]
         }
       ],
       "unknown_components": [
         {
+          "component": "CPU",
+          "vendor": "Intel",
+          "version": "Xeon-8480+",
+          "affected_nodes": 4,
+          "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+          "action_required": "Manual review required before procurement approval."
+        },
+        {
+          "component": "GPU",
+          "vendor": "NVIDIA",
+          "version": "H100-SXM5",
+          "affected_nodes": 4,
+          "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+          "action_required": "Manual review required before procurement approval."
+        },
+        {
+          "component": "Motherboard",
+          "vendor": "Supermicro",
+          "version": "X13-DPG",
+          "affected_nodes": 4,
+          "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+          "action_required": "Manual review required before procurement approval."
+        },
+        {
+          "component": "Power Supply Unit",
+          "vendor": "Delta Electronics",
+          "version": "DPS-2000AB",
+          "affected_nodes": 4,
+          "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+          "action_required": "Manual review required before procurement approval."
+        },
+        {
+          "component": "Memory Module",
+          "vendor": "Samsung",
+          "version": "DDR5-4800-64GB",
+          "affected_nodes": 4,
+          "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+          "action_required": "Manual review required before procurement approval."
+        },
+        {
           "component": "TPM Module",
           "vendor": "Nuvoton",
           "version": "1.3.2",
-          "affected_nodes": 1,
+          "affected_nodes": 4,
+          "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+          "action_required": "Manual review required before procurement approval."
+        },
+        {
+          "component": "Cooling Fan Controller",
+          "vendor": "Foxconn",
+          "version": "FCX-200",
+          "affected_nodes": 4,
+          "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
+          "action_required": "Manual review required before procurement approval."
+        },
+        {
+          "component": "PCIe Switch",
+          "vendor": "Broadcom",
+          "version": "PEX89104",
+          "affected_nodes": 4,
           "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
           "action_required": "Manual review required before procurement approval."
         },
@@ -326,7 +809,7 @@
           "component": "Custom Sensor Board",
           "vendor": "Rev3 Labs",
           "version": "2.1",
-          "affected_nodes": 1,
+          "affected_nodes": 4,
           "reason": "No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe.",
           "action_required": "Manual review required before procurement approval."
         }

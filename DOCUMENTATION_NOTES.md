@@ -269,6 +269,26 @@ pairings during the research for this prototype, and they're labeled as
 such rather than presented as real. Full details and links in
 `REFERENCES.md` §1-2.
 
+### 4.10 What-If Supply Chain Simulator (interactive mitigation modeling)
+Added to enable procurement and security analysts to simulate replacing a risky
+component with a vetted alternative and immediately observe how that hypothetical
+replacement changes component-level and overall BOM risk:
+- **Non-mutating hypothetical clone**: The uploaded or parsed BOM data is deep-copied
+  in memory (`copy.deepcopy`), ensuring baseline reports and audit records are never
+  mutated by hypothetical scenarios.
+- **Engine reuse, zero logic duplication**: The simulation calls the exact same
+  `match_component`, `apply_rules`, `score_component`, and `score_bom` functions
+  used in the primary ingestion pipeline.
+- **Explainable delta calculations**: The simulator outputs both component-level
+  and BOM-level deltas, percentage reductions, changes in CVE exposure, policy
+  flag resolutions (e.g. replacing a restricted vendor with a TAA/NDAA compliant
+  alternative), and generates a plain-English explanation of why the score shifted.
+- **Unknowns remain unverified**: If a user tests an unrecognized replacement,
+  the component is tracked as unscored and excluded from the numeric score rather
+  than falsely assuming 0 risk.
+- **Fleet-wide multi-node application**: In a multi-node rack BOM, replacing a
+  component applies across all affected nodes to simulate fleet procurement swaps.
+
 ## 5. Innovation (15%)
 
 Brief note: innovation is not complexity — a simpler solution that does the job

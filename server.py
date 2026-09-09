@@ -35,12 +35,18 @@ sys.path.insert(0, str(BASE_DIR / "src"))
 
 import main as scoring_pipeline
 import clean_bom as cleaner_module
+from bom_parser import parse_bom
+from cve_matcher import load_cve_database
+from rules_engine import load_rules
+from alternatives_engine import load_alternatives, find_alternatives_for
+from simulator import run_simulation
 
 UPLOADS_DIR = BASE_DIR / "output" / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 CVE_DB_PATH = BASE_DIR / "data" / "cve_database.json"
 RULES_PATH = BASE_DIR / "data" / "rules.json"
+ALTERNATIVES_PATH = BASE_DIR / "data" / "alternatives.json"
 
 SAMPLES = {
     "cyclonedx": BASE_DIR / "data" / "sample_bom_cyclonedx.json",
@@ -81,6 +87,14 @@ def process_bom_file(file_path, original_filename, clean_csv=True):
         cve_db_path=CVE_DB_PATH,
         rules_path=RULES_PATH,
     )
+
+    # Save parsed components list in run_dir for non-mutating What-If simulations
+    try:
+        comps, _ = parse_bom(scoring_bom_path)
+        with open(run_dir / "components.json", "w", encoding="utf-8") as f:
+            json.dump(comps, f, indent=2)
+    except Exception:
+        pass
 
     presentation = report.get("presentation", {})
     summary = {
@@ -554,6 +568,246 @@ HTML_PAGE = """<!DOCTYPE html>
       font-weight: 600;
       color: #fff;
     }
+
+    /* What-If Simulator Modal Styles */
+    .sim-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 13, 22, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 20px;
+    }
+
+    .sim-modal-overlay.active {
+      display: flex;
+    }
+
+    .sim-modal {
+      background: #111827;
+      border: 1px solid #1f293d;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 860px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      animation: modalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .sim-header {
+      padding: 20px 24px;
+      background: rgba(15, 23, 42, 0.85);
+      border-bottom: 1px solid #1f293d;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sim-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sim-close-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .sim-close-btn:hover {
+      background: #334155;
+      color: #fff;
+    }
+
+    .sim-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .sim-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .sim-grid { grid-template-columns: 1fr; }
+    }
+
+    .sim-card {
+      background: #0f172a;
+      border: 1px solid #1f293d;
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .sim-card.target-card {
+      border-left: 4px solid var(--danger);
+    }
+
+    .sim-card.sub-card {
+      border-left: 4px solid var(--accent);
+    }
+
+    .sim-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .sim-comp-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .sim-comp-meta {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .sim-field-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .sim-select, .sim-input {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: var(--sans);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .sim-select:focus, .sim-input:focus {
+      border-color: var(--accent);
+    }
+
+    .sim-custom-toggle {
+      font-size: 12px;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: underline;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    .sim-custom-inputs {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .sim-custom-inputs.active {
+      display: flex;
+    }
+
+    /* Simulation Results Banner */
+    .sim-results-box {
+      display: none;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid #1f293d;
+      border-radius: 12px;
+      padding: 20px;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sim-results-box.active {
+      display: flex;
+    }
+
+    .sim-kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .sim-kpi {
+      background: #111827;
+      border: 1px solid #1f293d;
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .sim-kpi-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .sim-kpi-val {
+      font-size: 24px;
+      font-weight: 800;
+      font-family: var(--mono);
+      margin-top: 4px;
+    }
+
+    .sim-kpi-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .sim-explanation {
+      background: #1e293b;
+      border-left: 3px solid var(--accent);
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 13.5px;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    .btn-sim-run {
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+      justify-content: center;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
@@ -644,6 +898,7 @@ HTML_PAGE = """<!DOCTYPE html>
         <div class="viewer-header">
           <div class="viewer-title" id="viewerTitle">Risk Findings & Action Report</div>
           <div class="btn-group">
+            <button type="button" id="launchSimulatorBtn" class="btn" style="background: linear-gradient(135deg, #0284c7, #2563eb); font-size: 13px; padding: 6px 14px;" onclick="openSimulatorModal()">⚡ What-If Simulator</button>
             <a id="cleanReportLink" href="#" target="_blank" class="btn btn-secondary" style="display: none; font-size: 13px; padding: 6px 14px;">View Cleaning Report</a>
             <a id="downloadJsonBtn" href="#" target="_blank" class="btn btn-secondary" style="font-size: 13px; padding: 6px 14px;">Download JSON</a>
             <a id="openTabBtn" href="#" target="_blank" class="btn" style="font-size: 13px; padding: 6px 14px;">Open Full Report ↗</a>
@@ -653,6 +908,113 @@ HTML_PAGE = """<!DOCTYPE html>
       </div>
     </section>
   </main>
+
+  <!-- What-If Supply Chain Simulator Modal -->
+  <div id="simModalOverlay" class="sim-modal-overlay">
+    <div class="sim-modal">
+      <div class="sim-header">
+        <div class="sim-title">⚡ What-If Supply Chain Simulator</div>
+        <button type="button" class="sim-close-btn" onclick="closeSimulatorModal()">✕</button>
+      </div>
+      <div class="sim-body">
+        <div class="sim-grid">
+          <!-- Current Target Component -->
+          <div class="sim-card target-card">
+            <div class="sim-card-title">Current Component in BOM</div>
+            <div>
+              <label class="sim-field-label">Select Component to Replace</label>
+              <select id="simTargetSelect" class="sim-select" onchange="onSimTargetChange()">
+                <option value="">-- Choose a component --</option>
+              </select>
+            </div>
+            <div id="simTargetDetails" style="display: none; flex-direction: column; gap: 6px;">
+              <div class="sim-comp-name" id="simTargetName">--</div>
+              <div class="sim-comp-meta" id="simTargetMeta">--</div>
+              <div style="margin-top: 4px; display: flex; align-items: center; gap: 8px;">
+                <span class="pill" id="simTargetPill">--</span>
+                <span style="font-weight: 700; font-family: var(--mono); font-size: 14px;" id="simTargetScore">Risk: --</span>
+              </div>
+              <div id="simTargetFlags" style="font-size: 12px; color: var(--text-muted); margin-top: 4px;"></div>
+            </div>
+          </div>
+
+          <!-- Proposed Substitute Component -->
+          <div class="sim-card sub-card">
+            <div class="sim-card-title">Simulated Replacement</div>
+            <div>
+              <label class="sim-field-label">Select Pre-Configured Alternative</label>
+              <select id="simAltSelect" class="sim-select" onchange="onSimAltSelectChange()">
+                <option value="">-- Select alternative --</option>
+              </select>
+              <span class="sim-custom-toggle" onclick="toggleCustomAltInputs()">or define custom replacement ✎</span>
+            </div>
+
+            <!-- Custom replacement input fields -->
+            <div id="simCustomInputs" class="sim-custom-inputs">
+              <div>
+                <label class="sim-field-label">Component Name</label>
+                <input type="text" id="simCustomName" class="sim-input" placeholder="e.g. BMC Firmware" />
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div>
+                  <label class="sim-field-label">Vendor</label>
+                  <input type="text" id="simCustomVendor" class="sim-input" placeholder="e.g. Aspeed" />
+                </div>
+                <div>
+                  <label class="sim-field-label">Version</label>
+                  <input type="text" id="simCustomVersion" class="sim-input" placeholder="e.g. 2.14" />
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div>
+                  <label class="sim-field-label">Origin Country (ISO-2)</label>
+                  <input type="text" id="simCustomOrigin" class="sim-input" placeholder="e.g. US or TW" />
+                </div>
+                <div>
+                  <label class="sim-field-label">Part Number (Optional)</label>
+                  <input type="text" id="simCustomPart" class="sim-input" placeholder="e.g. AST2600-OBMC" />
+                </div>
+              </div>
+            </div>
+
+            <div id="simAltNotes" style="display: none; font-size: 12px; color: #7dd3fc; background: rgba(56, 189, 248, 0.1); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.25);"></div>
+          </div>
+        </div>
+
+        <button type="button" id="runSimulationBtn" class="btn btn-sim-run" onclick="executeSimulation()">⚡ Run What-If Simulation</button>
+
+        <!-- Simulation Comparison Results -->
+        <div id="simResultsBox" class="sim-results-box">
+          <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent);">Simulation Impact Analysis</div>
+          
+          <div class="sim-kpi-row">
+            <div class="sim-kpi">
+              <div class="sim-kpi-label">Overall BOM Risk</div>
+              <div class="sim-kpi-val" id="simKpiBOMScore">-- ➔ --</div>
+              <div class="sim-kpi-sub" id="simKpiBOMDelta">--</div>
+            </div>
+            <div class="sim-kpi">
+              <div class="sim-kpi-label">Component Risk</div>
+              <div class="sim-kpi-val" id="simKpiCompScore">-- ➔ --</div>
+              <div class="sim-kpi-sub" id="simKpiCompDelta">--</div>
+            </div>
+            <div class="sim-kpi">
+              <div class="sim-kpi-label">Vulnerabilities (CVEs)</div>
+              <div class="sim-kpi-val" id="simKpiCves">--</div>
+              <div class="sim-kpi-sub" id="simKpiCveDetail">--</div>
+            </div>
+            <div class="sim-kpi">
+              <div class="sim-kpi-label">Policy & Lifecycle</div>
+              <div class="sim-kpi-val" id="simKpiPolicy">--</div>
+              <div class="sim-kpi-sub" id="simKpiPolicyDetail">--</div>
+            </div>
+          </div>
+
+          <div class="sim-explanation" id="simExplanationText">--</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div id="loader" class="loader-overlay">
     <div class="spinner"></div>
@@ -801,7 +1163,337 @@ HTML_PAGE = """<!DOCTYPE html>
 
       resultsSection.classList.add('active');
       resultsSection.scrollIntoView({ behavior: 'smooth' });
+
+      // Populate Simulator Target dropdown
+      currentRunId = data.run_id;
+      fetchRunFindings(data.report_json_url);
     }
+
+    /* What-If Simulator Client Logic */
+    let currentRunId = null;
+    let currentFindings = [];
+    let currentSelectedTarget = null;
+    let currentAlternatives = [];
+    let isCustomAlt = false;
+
+    async function fetchRunFindings(reportJsonUrl) {
+      try {
+        const resp = await fetch(reportJsonUrl);
+        if (resp.ok) {
+          const report = await resp.json();
+          currentFindings = report.findings_ranked || [];
+          populateTargetDropdown(currentFindings);
+        }
+      } catch (e) {
+        console.warn('Could not load findings for simulator:', e);
+      }
+    }
+
+    function populateTargetDropdown(findings) {
+      const select = document.getElementById('simTargetSelect');
+      select.innerHTML = '<option value="">-- Choose a component --</option>';
+      findings.forEach((f, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = `${f.component_name} (${f.vendor} v${f.version}) — Score: ${f.risk_score}`;
+        select.appendChild(opt);
+      });
+    }
+
+    function openSimulatorModal(targetCompName, targetVendor, targetVersion) {
+      const overlay = document.getElementById('simModalOverlay');
+      overlay.classList.add('active');
+
+      if (targetCompName) {
+        // Pre-select matching component
+        const idx = currentFindings.findIndex(f => 
+          f.component_name.toLowerCase() === targetCompName.toLowerCase() &&
+          (!targetVendor || f.vendor.toLowerCase() === targetVendor.toLowerCase())
+        );
+        if (idx !== -1) {
+          const select = document.getElementById('simTargetSelect');
+          select.value = idx;
+          onSimTargetChange();
+        }
+      } else if (!currentSelectedTarget && currentFindings.length > 0) {
+        document.getElementById('simTargetSelect').value = "0";
+        onSimTargetChange();
+      }
+    }
+
+    function closeSimulatorModal() {
+      document.getElementById('simModalOverlay').classList.remove('active');
+    }
+
+    async function onSimTargetChange() {
+      const select = document.getElementById('simTargetSelect');
+      const idx = select.value;
+      const detailsBox = document.getElementById('simTargetDetails');
+
+      if (idx === "") {
+        detailsBox.style.display = 'none';
+        currentSelectedTarget = null;
+        return;
+      }
+
+      const f = currentFindings[idx];
+      currentSelectedTarget = f;
+
+      detailsBox.style.display = 'flex';
+      document.getElementById('simTargetName').textContent = `${f.component_name} (${f.vendor})`;
+      document.getElementById('simTargetMeta').textContent = `Version: ${f.version} · Origin: ${f.origin_country} · Affects ${f.unit_count} unit(s)`;
+      document.getElementById('simTargetScore').textContent = `Risk: ${f.risk_score} / 100`;
+
+      const pill = document.getElementById('simTargetPill');
+      const score = f.risk_score;
+      if (score >= 60) {
+        pill.className = 'pill pill-critical';
+        pill.textContent = 'CRITICAL';
+      } else if (score >= 50) {
+        pill.className = 'pill pill-high';
+        pill.textContent = 'HIGH';
+      } else if (score >= 25) {
+        pill.className = 'pill pill-medium';
+        pill.textContent = 'MEDIUM';
+      } else {
+        pill.className = 'pill pill-low';
+        pill.textContent = 'LOW';
+      }
+
+      let flagInfo = [];
+      if (f.matched_cves && f.matched_cves.length > 0) {
+        flagInfo.push(`${f.matched_cves.length} CVE(s) detected`);
+      }
+      if (f.policy_flags && f.policy_flags.length > 0) {
+        flagInfo.push(`Policy violation (${f.policy_flags.length})`);
+      }
+      if (f.lifecycle_flags && f.lifecycle_flags.length > 0) {
+        flagInfo.push(`Lifecycle flag (${f.lifecycle_flags.length})`);
+      }
+      document.getElementById('simTargetFlags').textContent = flagInfo.join(' • ') || 'No flags';
+
+      // Fetch alternatives for this component
+      await fetchAlternativesFor(f.component_name, f.vendor);
+    }
+
+    async function fetchAlternativesFor(compName, vendor) {
+      const altSelect = document.getElementById('simAltSelect');
+      altSelect.innerHTML = '<option value="">Loading alternatives...</option>';
+      document.getElementById('simAltNotes').style.display = 'none';
+
+      try {
+        const resp = await fetch(`/api/alternatives?component=${encodeURIComponent(compName)}&vendor=${encodeURIComponent(vendor)}`);
+        const data = await resp.json();
+        currentAlternatives = data.options || [];
+
+        altSelect.innerHTML = '';
+        if (currentAlternatives.length > 0) {
+          currentAlternatives.forEach((alt, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `${alt.label}`;
+            altSelect.appendChild(opt);
+          });
+          altSelect.value = "0";
+          onSimAltSelectChange();
+        } else {
+          altSelect.innerHTML = '<option value="">No pre-configured alternatives in catalog</option>';
+          // Auto-expand custom inputs if no catalog entry
+          toggleCustomAltInputs(true);
+          document.getElementById('simCustomName').value = compName;
+        }
+      } catch (err) {
+        altSelect.innerHTML = '<option value="">Failed to load catalog</option>';
+      }
+    }
+
+    function onSimAltSelectChange() {
+      const idx = document.getElementById('simAltSelect').value;
+      const notesBox = document.getElementById('simAltNotes');
+
+      if (idx !== "" && currentAlternatives[idx]) {
+        const alt = currentAlternatives[idx];
+        notesBox.textContent = `ℹ️ ${alt.notes}`;
+        notesBox.style.display = 'block';
+
+        // Pre-fill custom fields in case user toggles
+        document.getElementById('simCustomName').value = alt.component_name;
+        document.getElementById('simCustomVendor').value = alt.vendor;
+        document.getElementById('simCustomVersion').value = alt.version;
+        document.getElementById('simCustomOrigin').value = alt.origin_country || 'US';
+        document.getElementById('simCustomPart').value = alt.part_number || '';
+      } else {
+        notesBox.style.display = 'none';
+      }
+    }
+
+    function toggleCustomAltInputs(forceOpen = null) {
+      const inputs = document.getElementById('simCustomInputs');
+      if (forceOpen !== null) {
+        isCustomAlt = forceOpen;
+      } else {
+        isCustomAlt = !isCustomAlt;
+      }
+
+      if (isCustomAlt) {
+        inputs.classList.add('active');
+      } else {
+        inputs.classList.remove('active');
+      }
+    }
+
+    async function executeSimulation() {
+      if (!currentSelectedTarget) {
+        alert('Please choose a component to replace first.');
+        return;
+      }
+
+      let substitute = null;
+      const altIdx = document.getElementById('simAltSelect').value;
+
+      if (!isCustomAlt && altIdx !== "" && currentAlternatives[altIdx]) {
+        const alt = currentAlternatives[altIdx];
+        substitute = {
+          component_name: alt.component_name,
+          vendor: alt.vendor,
+          version: alt.version,
+          origin_country: alt.origin_country || 'US',
+          part_number: alt.part_number || '',
+        };
+      } else {
+        // Read custom input fields
+        const cName = document.getElementById('simCustomName').value.trim();
+        const cVendor = document.getElementById('simCustomVendor').value.trim();
+        const cVersion = document.getElementById('simCustomVersion').value.trim();
+        const cOrigin = document.getElementById('simCustomOrigin').value.trim() || 'US';
+        const cPart = document.getElementById('simCustomPart').value.trim();
+
+        if (!cName || !cVendor || !cVersion) {
+          alert('Please provide component name, vendor, and version for custom replacement.');
+          return;
+        }
+
+        substitute = {
+          component_name: cName,
+          vendor: cVendor,
+          version: cVersion,
+          origin_country: cOrigin,
+          part_number: cPart,
+        };
+      }
+
+      const runBtn = document.getElementById('runSimulationBtn');
+      runBtn.textContent = 'Simulating...';
+      runBtn.disabled = true;
+
+      try {
+        const payload = {
+          run_id: currentRunId,
+          target: {
+            component_name: currentSelectedTarget.component_name,
+            vendor: currentSelectedTarget.vendor,
+            version: currentSelectedTarget.version,
+          },
+          substitute: substitute,
+          scope: 'all_instances',
+        };
+
+        const resp = await fetch('/api/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Simulation failed');
+        }
+
+        renderSimulationResults(data);
+      } catch (err) {
+        alert('Simulation error: ' + err.message);
+      } finally {
+        runBtn.textContent = '⚡ Run What-If Simulation';
+        runBtn.disabled = false;
+      }
+    }
+
+    function renderSimulationResults(data) {
+      const box = document.getElementById('simResultsBox');
+      box.classList.add('active');
+
+      const overall = data.overall;
+      const target = data.target;
+      const sub = data.substitute;
+      const dim = data.dimension_changes;
+
+      // Overall BOM score
+      const bScore = overall.before_score !== null ? overall.before_score : '--';
+      const aScore = overall.after_score !== null ? overall.after_score : '--';
+      document.getElementById('simKpiBOMScore').textContent = `${bScore} ➔ ${aScore}`;
+
+      const delta = overall.delta_score;
+      const deltaEl = document.getElementById('simKpiBOMDelta');
+      if (delta < 0) {
+        deltaEl.textContent = `▼ ${Math.abs(delta)} pts (${overall.percent_reduction}% reduction)`;
+        deltaEl.style.color = 'var(--success)';
+      } else if (delta > 0) {
+        deltaEl.textContent = `▲ +${delta} pts (increased risk)`;
+        deltaEl.style.color = 'var(--danger)';
+      } else {
+        deltaEl.textContent = `No change in BOM aggregate score`;
+        deltaEl.style.color = 'var(--text-muted)';
+      }
+
+      // Component Score
+      const tScore = target.risk_score !== null ? target.risk_score : 'N/A';
+      const sScore = sub.risk_score !== null ? sub.risk_score : 'Unscored';
+      document.getElementById('simKpiCompScore').textContent = `${tScore} ➔ ${sScore}`;
+      
+      const compDeltaEl = document.getElementById('simKpiCompDelta');
+      if (target.risk_score !== null && sub.risk_score !== null) {
+        const cDelta = Math.round((sub.risk_score - target.risk_score) * 10) / 10;
+        compDeltaEl.textContent = cDelta <= 0 ? `${cDelta} pts` : `+${cDelta} pts`;
+        compDeltaEl.style.color = cDelta < 0 ? 'var(--success)' : (cDelta > 0 ? 'var(--danger)' : 'var(--text-muted)');
+      } else {
+        compDeltaEl.textContent = 'Manual review required';
+        compDeltaEl.style.color = 'var(--warning)';
+      }
+
+      // CVEs
+      const cveDelta = dim.cve_delta;
+      const cveVal = document.getElementById('simKpiCves');
+      cveVal.textContent = cveDelta < 0 ? `${cveDelta} CVEs` : (cveDelta > 0 ? `+${cveDelta} CVEs` : `0 CVE change`);
+      cveVal.style.color = cveDelta < 0 ? 'var(--success)' : (cveDelta > 0 ? 'var(--danger)' : 'var(--text-muted)');
+      document.getElementById('simKpiCveDetail').textContent = `Max CVSS: ${target.highest_cvss} ➔ ${sub.highest_cvss}`;
+
+      // Policy & Lifecycle
+      const polDelta = dim.policy_flag_delta;
+      const lifeDelta = dim.lifecycle_flag_delta;
+      const polVal = document.getElementById('simKpiPolicy');
+      if (polDelta < 0) {
+        polVal.textContent = 'Policy Cleared';
+        polVal.style.color = 'var(--success)';
+      } else if (polDelta > 0) {
+        polVal.textContent = 'Policy Hit!';
+        polVal.style.color = 'var(--danger)';
+      } else {
+        polVal.textContent = lifeDelta < 0 ? 'Lifecycle Cleared' : (lifeDelta > 0 ? 'Lifecycle Added' : 'No Policy Changes');
+        polVal.style.color = lifeDelta < 0 ? 'var(--success)' : 'var(--text-muted)';
+      }
+      document.getElementById('simKpiPolicyDetail').textContent = `Policy flags: ${polDelta >= 0 ? '+' : ''}${polDelta}, Lifecycle: ${lifeDelta >= 0 ? '+' : ''}${lifeDelta}`;
+
+      // Explanation
+      document.getElementById('simExplanationText').textContent = data.explanation;
+      box.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Listen for postMessage from report iframe
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'OPEN_WHAT_IF_SIMULATOR') {
+        openSimulatorModal(event.data.component, event.data.vendor, event.data.version);
+      }
+    });
   </script>
 </body>
 </html>
@@ -851,6 +1543,21 @@ class BOMServerHandler(BaseHTTPRequestHandler):
                 self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(e)})
             return
 
+        if path == "/api/alternatives":
+            params = urllib.parse.parse_qs(parsed.query)
+            c_name = params.get("component", [""])[0]
+            c_vendor = params.get("vendor", [""])[0]
+
+            alts_catalog = load_alternatives(ALTERNATIVES_PATH)
+            options = find_alternatives_for(c_name, c_vendor, alts_catalog)
+            self.send_json(HTTPStatus.OK, {
+                "component_name": c_name,
+                "vendor": c_vendor,
+                "options": options,
+                "has_vetted_alternatives": len(options) > 0,
+            })
+            return
+
         if path.startswith("/reports/"):
             # Serve files under UPLOADS_DIR
             relative = path.replace("/reports/", "", 1)
@@ -877,6 +1584,68 @@ class BOMServerHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
+
+        if parsed.path == "/api/simulate":
+            content_length = int(self.headers.get("Content-Length", 0))
+            if content_length <= 0:
+                self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Empty simulation request payload."})
+                return
+
+            try:
+                body = json.loads(self.rfile.read(content_length).decode("utf-8"))
+            except Exception as e:
+                self.send_json(HTTPStatus.BAD_REQUEST, {"error": f"Invalid JSON payload: {e}"})
+                return
+
+            run_id = body.get("run_id")
+            target = body.get("target")
+            substitute = body.get("substitute")
+            scope = body.get("scope", "all_instances")
+
+            if not target or not substitute:
+                self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Missing 'target' or 'substitute' in simulation payload."})
+                return
+
+            # Determine components source: run_id directory or default sample BOM
+            components = None
+            if run_id:
+                run_dir = UPLOADS_DIR / run_id
+                comp_file = run_dir / "components.json"
+                if comp_file.exists():
+                    try:
+                        with open(comp_file, encoding="utf-8") as f:
+                            components = json.load(f)
+                    except Exception:
+                        components = None
+                if components is None:
+                    # Fallback to finding any CSV or JSON BOM in run_dir
+                    for f_cand in run_dir.iterdir():
+                        if f_cand.suffix.lower() in (".csv", ".json") and f_cand.name != "report.json":
+                            try:
+                                components, _ = parse_bom(f_cand)
+                                break
+                            except Exception:
+                                pass
+
+            if components is None:
+                # Fallback to sample_bom.csv
+                components, _ = parse_bom(SAMPLES["csv"])
+
+            try:
+                cve_entries = load_cve_database(CVE_DB_PATH)
+                rules = load_rules(RULES_PATH)
+                result = run_simulation(
+                    original_components=components,
+                    target_component=target,
+                    substitute_component=substitute,
+                    cve_entries=cve_entries,
+                    rules=rules,
+                    scope=scope,
+                )
+                self.send_json(HTTPStatus.OK, result)
+            except Exception as e:
+                self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(e)})
+            return
         if parsed.path == "/api/upload":
             content_length = int(self.headers.get("Content-Length", 0))
             if content_length <= 0:

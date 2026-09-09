@@ -123,6 +123,27 @@
     display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
   }
   .note { margin-top: 18px; color: var(--text-dim); font-size: 13px; font-style: italic; }
+  .what-if-btn {
+    background: linear-gradient(135deg, #0284c7, #2563eb);
+    color: #fff;
+    border: 1px solid #38bdf8;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+  }
+  .what-if-btn:hover {
+    background: linear-gradient(135deg, #38bdf8, #3b82f6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(56, 189, 248, 0.35);
+  }
   @media (max-width: 720px) {
     .bar-row { grid-template-columns: 1fr; }
     body { padding: 16px; }
@@ -144,10 +165,10 @@
       </div>
       <div class="hero-score">
         <span class="pill pill-critical">CRITICAL</span>
-        <div class="num">62.7<span class="num-max"> / 100</span></div>
+        <div class="num">62.3<span class="num-max"> / 100</span></div>
       </div>
     </div>
-    <div class="metrics"><div class="metric"><div class="metric-label">Total components</div><div class="metric-value">5</div></div><div class="metric"><div class="metric-label">Assessed</div><div class="metric-value">3</div></div><div class="metric"><div class="metric-label">Unverified</div><div class="metric-value">2</div></div><div class="metric"><div class="metric-label">High / critical</div><div class="metric-value">2</div></div><div class="metric"><div class="metric-label">Max component risk</div><div class="metric-value">69.6</div></div><div class="metric"><div class="metric-label">Mean component risk</div><div class="metric-value">52.2</div></div><div class="metric"><div class="metric-label">Affected nodes</div><div class="metric-value">0</div></div><div class="metric"><div class="metric-label">Policy findings</div><div class="metric-value">1</div></div><div class="metric"><div class="metric-label">Lifecycle findings</div><div class="metric-value">2</div></div><div class="metric"><div class="metric-label">Single-source deps</div><div class="metric-value">1</div></div></div>
+    <div class="metrics"><div class="metric"><div class="metric-label">Total components</div><div class="metric-value">60</div></div><div class="metric"><div class="metric-label">Assessed</div><div class="metric-value">24</div></div><div class="metric"><div class="metric-label">Unverified</div><div class="metric-value">36</div></div><div class="metric"><div class="metric-label">High / critical</div><div class="metric-value">5</div></div><div class="metric"><div class="metric-label">Max component risk</div><div class="metric-value">69.6</div></div><div class="metric"><div class="metric-label">Mean component risk</div><div class="metric-value">51.3</div></div><div class="metric"><div class="metric-label">Affected nodes</div><div class="metric-value">4</div></div><div class="metric"><div class="metric-label">Policy findings</div><div class="metric-value">1</div></div><div class="metric"><div class="metric-label">Lifecycle findings</div><div class="metric-value">6</div></div><div class="metric"><div class="metric-label">Single-source deps</div><div class="metric-value">2</div></div></div>
     <div class="bands"><span class="band band-critical">CRITICAL &gt;= 60</span><span class="band band-high">HIGH 50-59.9</span><span class="band band-medium">MEDIUM 25-49.9</span><span class="band band-low">LOW &lt; 25</span></div>
     <div class="callout">No CVE match was found for these components, so they cannot be verified as safe or unsafe. Manual review is required before procurement approval.</div>
   </section>
@@ -155,9 +176,9 @@
   <section class="page" id="page-2">
     <h2>Risk Landscape</h2><p class="purpose">Ranked component risk and node-level exposure.</p>
     <h3>Ranked findings</h3>
-    <div class="bar-row"><div class="bar-label">1. BMC Firmware<span>AMI · v12.4</span></div><div class="bar-track"><div class="bar-fill lvl-critical" style="width:69.6%"></div></div><div class="bar-score">69.6</div><span class="pill pill-critical">CRITICAL</span></div><div class="bar-row"><div class="bar-label">2. NIC Firmware<span>Broadcom · v21.60</span></div><div class="bar-track"><div class="bar-fill lvl-critical" style="width:62.1%"></div></div><div class="bar-score">62.1</div><span class="pill pill-critical">CRITICAL</span></div><div class="bar-row"><div class="bar-label">3. Network Camera Module<span>Hikvision · vDS-2CD2143</span></div><div class="bar-track"><div class="bar-fill lvl-medium" style="width:25.0%"></div></div><div class="bar-score">25.0</div><span class="pill pill-medium">MEDIUM</span></div>
+    <div class="bar-row"><div class="bar-label">1. BMC Firmware<span>AMI · v12.4</span></div><div class="bar-track"><div class="bar-fill lvl-critical" style="width:69.6%"></div></div><div class="bar-score">69.6</div><span class="pill pill-critical">CRITICAL</span></div><div class="bar-row"><div class="bar-label">2. NIC Firmware<span>Broadcom · v21.60</span></div><div class="bar-track"><div class="bar-fill lvl-critical" style="width:62.1%"></div></div><div class="bar-score">62.1</div><span class="pill pill-critical">CRITICAL</span></div><div class="bar-row"><div class="bar-label">3. RAID Controller Firmware<span>Broadcom · v52.16.0</span></div><div class="bar-track"><div class="bar-fill lvl-critical" style="width:61.8%"></div></div><div class="bar-score">61.8</div><span class="pill pill-critical">CRITICAL</span></div><div class="bar-row"><div class="bar-label">4. UEFI Firmware<span>AMI · v5.19</span></div><div class="bar-track"><div class="bar-fill lvl-high" style="width:56.7%"></div></div><div class="bar-score">56.7</div><span class="pill pill-high">HIGH</span></div><div class="bar-row"><div class="bar-label">5. Bootloader Firmware<span>AMI · v3.1</span></div><div class="bar-track"><div class="bar-fill lvl-high" style="width:52.5%"></div></div><div class="bar-score">52.5</div><span class="pill pill-high">HIGH</span></div><div class="bar-row"><div class="bar-label">6. Network Camera Module<span>Hikvision · vDS-2CD2143</span></div><div class="bar-track"><div class="bar-fill lvl-medium" style="width:25.0%"></div></div><div class="bar-score">25.0</div><span class="pill pill-medium">MEDIUM</span></div><div class="bar-row"><div class="bar-label">7. UEFI Firmware<span>AMI · v6.0</span></div><div class="bar-track"><div class="bar-fill lvl-low" style="width:7.5%"></div></div><div class="bar-score">7.5</div><span class="pill pill-low">LOW</span></div>
     <h3>Node heatmap</h3>
-    <div class='heatmap-wrap'><table class='heatmap'><thead><tr><th></th></tr></thead><tbody><tr><td class="heat-name">BMC Firmware<div class="comp-meta">AMI · 69.6</div></td></tr><tr><td class="heat-name">NIC Firmware<div class="comp-meta">Broadcom · 62.1</div></td></tr><tr><td class="heat-name">Network Camera Module<div class="comp-meta">Hikvision · 25.0</div></td></tr></tbody></table></div>
+    <div class='heatmap-wrap'><table class='heatmap'><thead><tr><th></th><th>NODE-01</th><th>NODE-02</th><th>NODE-03</th><th>NODE-04</th></tr></thead><tbody><tr><td class="heat-name">BMC Firmware<div class="comp-meta">AMI · 69.6</div></td><td><span class="heat-cell on lvl-critical"></span></td><td><span class="heat-cell on lvl-critical"></span></td><td><span class="heat-cell on lvl-critical"></span></td><td><span class="heat-cell on lvl-critical"></span></td></tr><tr><td class="heat-name">NIC Firmware<div class="comp-meta">Broadcom · 62.1</div></td><td><span class="heat-cell on lvl-critical"></span></td><td><span class="heat-cell on lvl-critical"></span></td><td><span class="heat-cell on lvl-critical"></span></td><td><span class="heat-cell on lvl-critical"></span></td></tr><tr><td class="heat-name">RAID Controller Firmware<div class="comp-meta">Broadcom · 61.8</div></td><td><span class="heat-cell on lvl-critical"></span></td><td><span class="heat-cell on lvl-critical"></span></td><td><span class="heat-cell on lvl-critical"></span></td><td><span class="heat-cell on lvl-critical"></span></td></tr><tr><td class="heat-name">UEFI Firmware<div class="comp-meta">AMI · 56.7</div></td><td><span class="heat-cell on lvl-high"></span></td><td><span class="heat-cell on lvl-high"></span></td><td><span class="heat-cell on lvl-high"></span></td><td><span class="heat-cell off lvl-high"></span></td></tr><tr><td class="heat-name">Bootloader Firmware<div class="comp-meta">AMI · 52.5</div></td><td><span class="heat-cell on lvl-high"></span></td><td><span class="heat-cell on lvl-high"></span></td><td><span class="heat-cell on lvl-high"></span></td><td><span class="heat-cell on lvl-high"></span></td></tr><tr><td class="heat-name">Network Camera Module<div class="comp-meta">Hikvision · 25.0</div></td><td><span class="heat-cell on lvl-medium"></span></td><td><span class="heat-cell on lvl-medium"></span></td><td><span class="heat-cell on lvl-medium"></span></td><td><span class="heat-cell on lvl-medium"></span></td></tr><tr><td class="heat-name">UEFI Firmware<div class="comp-meta">AMI · 7.5</div></td><td><span class="heat-cell off lvl-low"></span></td><td><span class="heat-cell off lvl-low"></span></td><td><span class="heat-cell off lvl-low"></span></td><td><span class="heat-cell on lvl-low"></span></td></tr></tbody></table></div>
   </section>
 
   <section class="page" id="page-3">
@@ -167,9 +188,10 @@
           <div class="finding-head">
             <div>
               <div class="comp-name">#1 BMC Firmware</div>
-              <div class="comp-meta">AMI · v12.4 · 1 nodes</div>
+              <div class="comp-meta">AMI · v12.4 · 4 nodes</div>
             </div>
             <div class="finding-head-right">
+              <button type="button" class="what-if-btn" onclick="triggerSimulation('BMC Firmware', 'AMI', '12.4')">⚡ What-If</button>
               <span class="pill pill-critical">CRITICAL</span>
               <span class="risk-score">69.6<span class="risk-score-max">/100</span></span>
             </div>
@@ -185,9 +207,10 @@
           <div class="finding-head">
             <div>
               <div class="comp-name">#2 NIC Firmware</div>
-              <div class="comp-meta">Broadcom · v21.60 · 1 nodes</div>
+              <div class="comp-meta">Broadcom · v21.60 · 4 nodes</div>
             </div>
             <div class="finding-head-right">
+              <button type="button" class="what-if-btn" onclick="triggerSimulation('NIC Firmware', 'Broadcom', '21.60')">⚡ What-If</button>
               <span class="pill pill-critical">CRITICAL</span>
               <span class="risk-score">62.1<span class="risk-score-max">/100</span></span>
             </div>
@@ -199,46 +222,61 @@
             <div class="mitigation"><span class="section-label">Recommended action</span>Patch/upgrade NIC Firmware (Broadcom) past the affected version range, or isolate on a management-only network segment until patched.</div>
           </div>
         </div>
-        <div class="finding-card verdict-border-medium">
+        <div class="finding-card verdict-border-critical">
           <div class="finding-head">
             <div>
-              <div class="comp-name">#3 Network Camera Module</div>
-              <div class="comp-meta">Hikvision · vDS-2CD2143 · 1 nodes</div>
+              <div class="comp-name">#3 RAID Controller Firmware</div>
+              <div class="comp-meta">Broadcom · v52.16.0 · 4 nodes</div>
             </div>
             <div class="finding-head-right">
-              <span class="pill pill-medium">MEDIUM</span>
-              <span class="risk-score">25.0<span class="risk-score-max">/100</span></span>
+              <button type="button" class="what-if-btn" onclick="triggerSimulation('RAID Controller Firmware', 'Broadcom', '52.16.0')">⚡ What-If</button>
+              <span class="pill pill-critical">CRITICAL</span>
+              <span class="risk-score">61.8<span class="risk-score-max">/100</span></span>
             </div>
           </div>
           <div class="finding-body">
+            <div class='section-label'>Known vulnerabilities</div><ul class='cve-ul'><li><span class='cve-id'>CVE-2023-22809-SIM</span> <span class='badge badge-sim'>SIMULATED</span> <span class='sev sev-high'>HIGH · CVSS 7.8</span><div class='cve-desc'>SIMULATED for prototype coverage - fabricated privilege-escalation scenario in RAID controller management utility via crafted configuration file. Not a real, resolvable CVE record.</div></li></ul>
             
-            <div class='section-label'>Policy flags</div><ul><li>Vendor &#x27;Hikvision&#x27; is on the restricted-vendor list: On multiple national restricted-entity lists for critical infrastructure procurement.</li></ul>
-            
-            <div class="mitigation"><span class="section-label">Recommended action</span>Source an equivalent Network Camera Module from a non-restricted vendor/origin before procurement approval.</div>
+            <div class='section-label'>Lifecycle flags</div><ul><li>Component reached end-of-life on 2025-03-01 - no further security patches expected.</li><li>&#x27;RAID Controller Firmware&#x27; is flagged as a single-source dependency - no qualified alternate vendor on record.</li></ul>
+            <div class="mitigation"><span class="section-label">Recommended action</span>Patch/upgrade RAID Controller Firmware (Broadcom) past the affected version range, or isolate on a management-only network segment until patched.</div>
           </div>
         </div>
-    
+    <h3>Other ranked findings</h3><div class="mini-finding"><span class="pill pill-high">HIGH</span><b>UEFI Firmware</b> · AMI · 56.7<div class="comp-meta">Patch/upgrade UEFI Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched.</div></div><div class="mini-finding"><span class="pill pill-high">HIGH</span><b>Bootloader Firmware</b> · AMI · 52.5<div class="comp-meta">Patch/upgrade Bootloader Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched.</div></div><div class="mini-finding"><span class="pill pill-medium">MEDIUM</span><b>Network Camera Module</b> · Hikvision · 25.0<div class="comp-meta">Source an equivalent Network Camera Module from a non-restricted vendor/origin before procurement approval.</div></div><div class="mini-finding"><span class="pill pill-low">LOW</span><b>UEFI Firmware</b> · AMI · 7.5<div class="comp-meta">Qualify an alternate vendor for UEFI Firmware and plan replacement ahead of EOL.</div></div>
   </section>
 
   <section class="page" id="page-4">
     <h2>Supply Chain Intelligence</h2><p class="purpose">Highlight lifecycle, vendor-policy, concentration and unknown risks.</p>
     <h3>Lifecycle risk</h3>
-    <div class="intel-grid"><div class="intel-card lifecycle"><div class="comp-name">BMC Firmware</div><div class="comp-meta">AMI · 69.6</div><ul><li>Component reached end-of-life on 2024-06-30 - no further security patches expected.</li><li>&#x27;BMC Firmware&#x27; is flagged as a single-source dependency - no qualified alternate vendor on record.</li></ul></div><div class="intel-card lifecycle"><div class="comp-name">NIC Firmware</div><div class="comp-meta">Broadcom · 62.1</div><ul><li>Component approaching end-of-life (2027-01-01) within 6 months.</li></ul></div></div>
+    <div class="intel-grid"><div class="intel-card lifecycle"><div class="comp-name">BMC Firmware</div><div class="comp-meta">AMI · 69.6</div><ul><li>Component reached end-of-life on 2024-06-30 - no further security patches expected.</li><li>&#x27;BMC Firmware&#x27; is flagged as a single-source dependency - no qualified alternate vendor on record.</li></ul></div><div class="intel-card lifecycle"><div class="comp-name">NIC Firmware</div><div class="comp-meta">Broadcom · 62.1</div><ul><li>Component approaching end-of-life (2027-01-01) within 6 months.</li></ul></div><div class="intel-card lifecycle"><div class="comp-name">RAID Controller Firmware</div><div class="comp-meta">Broadcom · 61.8</div><ul><li>Component reached end-of-life on 2025-03-01 - no further security patches expected.</li><li>&#x27;RAID Controller Firmware&#x27; is flagged as a single-source dependency - no qualified alternate vendor on record.</li></ul></div><div class="intel-card lifecycle"><div class="comp-name">UEFI Firmware</div><div class="comp-meta">AMI · 56.7</div><ul><li>Component reached end-of-life on 2026-01-01 - no further security patches expected.</li></ul></div><div class="intel-card lifecycle"><div class="comp-name">Bootloader Firmware</div><div class="comp-meta">AMI · 52.5</div><ul><li>Component reached end-of-life on 2025-12-01 - no further security patches expected.</li></ul></div><div class="intel-card lifecycle"><div class="comp-name">UEFI Firmware</div><div class="comp-meta">AMI · 7.5</div><ul><li>Component reached end-of-life on 2026-01-01 - no further security patches expected.</li></ul></div></div>
     <h3>Policy risk</h3>
     <div class="intel-grid"><div class="intel-card policy"><div class="comp-name">Network Camera Module</div><div class="comp-meta">Hikvision · 25.0</div><ul><li>Vendor &#x27;Hikvision&#x27; is on the restricted-vendor list: On multiple national restricted-entity lists for critical infrastructure procurement.</li></ul></div></div>
     <h3>Single-source dependencies</h3>
-    <div class="intel-grid"><div class="intel-card single"><div class="comp-name">BMC Firmware</div><div class="comp-meta">AMI</div><ul><li>&#x27;BMC Firmware&#x27; is flagged as a single-source dependency - no qualified alternate vendor on record.</li></ul></div></div>
+    <div class="intel-grid"><div class="intel-card single"><div class="comp-name">BMC Firmware</div><div class="comp-meta">AMI</div><ul><li>&#x27;BMC Firmware&#x27; is flagged as a single-source dependency - no qualified alternate vendor on record.</li></ul></div><div class="intel-card single"><div class="comp-name">RAID Controller Firmware</div><div class="comp-meta">Broadcom</div><ul><li>&#x27;RAID Controller Firmware&#x27; is flagged as a single-source dependency - no qualified alternate vendor on record.</li></ul></div></div>
     <h3>Unknown / unverified components</h3>
-    <div class="intel-grid"><div class="intel-card unknown"><div class="comp-name">TPM Module</div><div class="comp-meta">Nuvoton · v1.3.2 · 1 nodes</div><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div><div class="intel-card unknown"><div class="comp-name">Custom Sensor Board</div><div class="comp-meta">Rev3 Labs · v2.1 · 1 nodes</div><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div></div>
+    <div class="intel-grid"><div class="intel-card unknown"><div class="comp-name">CPU</div><div class="comp-meta">Intel · vXeon-8480+ · 4 nodes</div><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div><div class="intel-card unknown"><div class="comp-name">GPU</div><div class="comp-meta">NVIDIA · vH100-SXM5 · 4 nodes</div><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div><div class="intel-card unknown"><div class="comp-name">Motherboard</div><div class="comp-meta">Supermicro · vX13-DPG · 4 nodes</div><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div><div class="intel-card unknown"><div class="comp-name">Power Supply Unit</div><div class="comp-meta">Delta Electronics · vDPS-2000AB · 4 nodes</div><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div><div class="intel-card unknown"><div class="comp-name">Memory Module</div><div class="comp-meta">Samsung · vDDR5-4800-64GB · 4 nodes</div><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div><div class="intel-card unknown"><div class="comp-name">TPM Module</div><div class="comp-meta">Nuvoton · v1.3.2 · 4 nodes</div><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div><div class="intel-card unknown"><div class="comp-name">Cooling Fan Controller</div><div class="comp-meta">Foxconn · vFCX-200 · 4 nodes</div><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div><div class="intel-card unknown"><div class="comp-name">PCIe Switch</div><div class="comp-meta">Broadcom · vPEX89104 · 4 nodes</div><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div><div class="intel-card unknown"><div class="comp-name">Custom Sensor Board</div><div class="comp-meta">Rev3 Labs · v2.1 · 4 nodes</div><p>No CVE match (exact or fuzzy) found in local dataset - cannot be verified as safe or unsafe. Manual review required before procurement approval.</p></div></div>
   </section>
 
   <section class="page" id="page-5">
     <h2>Remediation &amp; Methodology</h2><p class="purpose">Show prioritized actions and how the assessment works.</p>
     <h3>Remediation order</h3>
-    <div class="rem-row"><div class="rem-num">1</div><div><div class="comp-name">BMC Firmware <span class="pill pill-critical">CRITICAL</span></div><div class="comp-meta">AMI · 69.6</div><p>Patch/upgrade BMC Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched.</p></div></div><div class="rem-row"><div class="rem-num">2</div><div><div class="comp-name">NIC Firmware <span class="pill pill-critical">CRITICAL</span></div><div class="comp-meta">Broadcom · 62.1</div><p>Patch/upgrade NIC Firmware (Broadcom) past the affected version range, or isolate on a management-only network segment until patched.</p></div></div><div class="rem-row"><div class="rem-num">3</div><div><div class="comp-name">Network Camera Module <span class="pill pill-medium">MEDIUM</span></div><div class="comp-meta">Hikvision · 25.0</div><p>Source an equivalent Network Camera Module from a non-restricted vendor/origin before procurement approval.</p></div></div>
+    <div class="rem-row"><div class="rem-num">1</div><div><div class="comp-name">BMC Firmware <span class="pill pill-critical">CRITICAL</span></div><div class="comp-meta">AMI · 69.6</div><p>Patch/upgrade BMC Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched.</p></div></div><div class="rem-row"><div class="rem-num">2</div><div><div class="comp-name">NIC Firmware <span class="pill pill-critical">CRITICAL</span></div><div class="comp-meta">Broadcom · 62.1</div><p>Patch/upgrade NIC Firmware (Broadcom) past the affected version range, or isolate on a management-only network segment until patched.</p></div></div><div class="rem-row"><div class="rem-num">3</div><div><div class="comp-name">RAID Controller Firmware <span class="pill pill-critical">CRITICAL</span></div><div class="comp-meta">Broadcom · 61.8</div><p>Patch/upgrade RAID Controller Firmware (Broadcom) past the affected version range, or isolate on a management-only network segment until patched.</p></div></div><div class="rem-row"><div class="rem-num">4</div><div><div class="comp-name">UEFI Firmware <span class="pill pill-high">HIGH</span></div><div class="comp-meta">AMI · 56.7</div><p>Patch/upgrade UEFI Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched.</p></div></div><div class="rem-row"><div class="rem-num">5</div><div><div class="comp-name">Bootloader Firmware <span class="pill pill-high">HIGH</span></div><div class="comp-meta">AMI · 52.5</div><p>Patch/upgrade Bootloader Firmware (AMI) past the affected version range, or isolate on a management-only network segment until patched.</p></div></div>
     <h3>Methodology</h3>
     <ol class="method"><li><span class="step">1</span>BOM ingestion</li><li><span class="step">2</span>Component normalization</li><li><span class="step">3</span>Component matching</li><li><span class="step">4</span>CVE intelligence</li><li><span class="step">5</span>Lifecycle intelligence</li><li><span class="step">6</span>Vendor / policy checks</li><li><span class="step">7</span>Risk scoring</li><li><span class="step">8</span>Prioritized remediation</li></ol>
     <p class="note">Some vulnerability records in this assessment are simulated for prototype coverage and should not be interpreted as real CVE advisories.</p>
   </section>
 </div>
+<script>
+function triggerSimulation(componentName, vendor, version) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({
+      type: 'OPEN_WHAT_IF_SIMULATOR',
+      component: componentName,
+      vendor: vendor,
+      version: version
+    }, '*');
+  } else {
+    alert('What-If Supply Chain Simulator: To simulate replacing ' + componentName + ' (' + vendor + ' v' + version + '), open this report inside the Server BOM Ingestion Portal at http://localhost:8080');
+  }
+}
+</script>
 </body></html>

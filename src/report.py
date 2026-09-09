@@ -432,6 +432,7 @@ def _render_presentation_html(report):
               <div class="comp-meta">{_e(item.get('vendor'))} · v{_e(item.get('version'))} · {item.get('affected_nodes')} nodes</div>
             </div>
             <div class="finding-head-right">
+              <button type="button" class="what-if-btn" onclick="triggerSimulation('{_e(item.get('component'))}', '{_e(item.get('vendor'))}', '{_e(item.get('version'))}')">⚡ What-If</button>
               <span class="pill pill-{_level_class(item.get('risk_level'))}">{_e(item.get('risk_level'))}</span>
               <span class="risk-score">{_e(item.get('risk_score'))}<span class="risk-score-max">/100</span></span>
             </div>
@@ -638,6 +639,27 @@ def _render_presentation_html(report):
     display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
   }}
   .note {{ margin-top: 18px; color: var(--text-dim); font-size: 13px; font-style: italic; }}
+  .what-if-btn {{
+    background: linear-gradient(135deg, #0284c7, #2563eb);
+    color: #fff;
+    border: 1px solid #38bdf8;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+  }}
+  .what-if-btn:hover {{
+    background: linear-gradient(135deg, #38bdf8, #3b82f6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(56, 189, 248, 0.35);
+  }}
   @media (max-width: 720px) {{
     .bar-row {{ grid-template-columns: 1fr; }}
     body {{ padding: 16px; }}
@@ -702,6 +724,20 @@ def _render_presentation_html(report):
     <p class="note">{_e(p.get('prototype_note'))}</p>
   </section>
 </div>
+<script>
+function triggerSimulation(componentName, vendor, version) {{
+  if (window.parent && window.parent !== window) {{
+    window.parent.postMessage({{
+      type: 'OPEN_WHAT_IF_SIMULATOR',
+      component: componentName,
+      vendor: vendor,
+      version: version
+    }}, '*');
+  }} else {{
+    alert('What-If Supply Chain Simulator: To simulate replacing ' + componentName + ' (' + vendor + ' v' + version + '), open this report inside the Server BOM Ingestion Portal at http://localhost:8080');
+  }}
+}}
+</script>
 </body></html>"""
 
 

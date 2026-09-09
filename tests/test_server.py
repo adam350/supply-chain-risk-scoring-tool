@@ -113,5 +113,50 @@ class TestBOMServer(unittest.TestCase):
             self.assertIn("is not a CycloneDX BOM", err_data["error"])
 
 
+    def test_api_alternatives(self):
+        req = urllib.request.Request(f"{self.base_url}/api/alternatives?component=BMC%20Firmware&vendor=AMI")
+        with urllib.request.urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertTrue(data["has_vetted_alternatives"])
+            self.assertGreaterEqual(len(data["options"]), 2)
+            self.assertEqual(data["options"][0]["vendor"], "AMI")
+            self.assertEqual(data["options"][0]["version"], "13.1")
+
+    def test_api_simulate(self):
+        payload = json.dumps({
+            "target": {
+                "component_name": "BMC Firmware",
+                "vendor": "AMI",
+                "version": "12.4"
+            },
+            "substitute": {
+                "component_name": "BMC Firmware",
+                "vendor": "AMI",
+                "version": "13.1",
+                "origin_country": "US",
+                "part_number": "AMI-BMC-131"
+            },
+            "scope": "all_instances"
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            f"{self.base_url}/api/simulate",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertEqual(data["status"], "success")
+            self.assertEqual(data["overall"]["outcome"], "improved")
+            self.assertLess(data["overall"]["delta_score"], 0)
+            self.assertEqual(data["target"]["cve_count"], 2)
+            self.assertEqual(data["substitute"]["cve_count"], 0)
+            self.assertIn("Remediated 2 known CVE(s)", data["explanation"])
+
+
 if __name__ == "__main__":
     unittest.main()
+

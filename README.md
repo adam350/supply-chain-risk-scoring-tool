@@ -25,7 +25,7 @@ a bug, left sidebar), use the dropdown at the top to pick "1. Clean the BOM
 only" or "2. Score the BOM only", and click the green ▷ play arrow. No typing
 required.
 
-## Manual Web Upload Portal
+## Manual Web Upload Portal & What-If Supply Chain Simulator
 
 You can upload and score any server BOM file (CycloneDX JSON or CSV) interactively using the built-in local web portal (standard library only, zero extra dependencies):
 
@@ -35,7 +35,10 @@ python server.py
 python main.py --serve
 ```
 
-This launches the local server at `http://localhost:8080`, opens your browser, and provides drag-and-drop file upload, format detection, one-click sample testing, and an interactive report viewer.
+This launches the local server at `http://localhost:8080`, opens your browser, and provides:
+- **Interactive File Ingestion**: Drag-and-drop file upload, format detection, and one-click sample testing.
+- **What-If Supply Chain Simulator**: Click **"⚡ What-If Simulator"** (or click **"⚡ What-If"** on any finding card in the report viewer) to simulate hypothetical component swaps, test vetted drop-in replacements, and immediately see recalculated BOM risk, CVE remediations, policy clearances, and natural language impact explanations without altering the uploaded BOM.
+- **Interactive Report Viewer**: Embedded 5-page presentation report with node heatmaps and executive summaries.
 
 ## Running from a terminal instead
 

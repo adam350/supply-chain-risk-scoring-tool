@@ -1,0 +1,140 @@
+{
+  "_schema_note": "Catalog of vetted alternative components and version upgrades for the What-If Supply Chain Simulator. Used to simulate component replacements and quantify risk reduction.",
+  "alternatives": [
+    {
+      "target_component_name": "BMC Firmware",
+      "target_vendor": "AMI",
+      "options": [
+        {
+          "id": "alt-ami-bmc-13.1",
+          "label": "AMI MegaRAC SP-X v13.1 (Patched OEM Upgrade)",
+          "component_name": "BMC Firmware",
+          "vendor": "AMI",
+          "version": "13.1",
+          "origin_country": "US",
+          "part_number": "AMI-BMC-131",
+          "type": "version_upgrade",
+          "notes": "Direct vendor upgrade past affected v12.5 boundary. Remediates CVE-2023-34329 (Redfish Auth Bypass, CVSS 9.1) and CVE-2023-34330 (Root RCE, CVSS 8.2)."
+        },
+        {
+          "id": "alt-aspeed-openbmc-2.14",
+          "label": "OpenBMC / ASPEED v2.14 (Hardened Baseline)",
+          "component_name": "BMC Firmware",
+          "vendor": "Aspeed",
+          "version": "2.14",
+          "origin_country": "TW",
+          "part_number": "AST2600-OBMC-214",
+          "type": "drop_in_replacement",
+          "notes": "Transition from proprietary MegaRAC to vetted open-source OpenBMC stack on Aspeed AST2600. Patched against CVE-2019-6260 ('Pantsdown')."
+        }
+      ]
+    },
+    {
+      "target_component_name": "NIC Firmware",
+      "target_vendor": "Broadcom",
+      "options": [
+        {
+          "id": "alt-broadcom-nic-22.40",
+          "label": "Broadcom NetXtreme Firmware v22.40 (Patched)",
+          "component_name": "NIC Firmware",
+          "vendor": "Broadcom",
+          "version": "22.40",
+          "origin_country": "US",
+          "part_number": "BCM-NIC-2240",
+          "type": "version_upgrade",
+          "notes": "Upgrade past v21.60 affected range. Remediates simulated packet parsing buffer overflow (CVE-2021-3711-SIM, CVSS 9.1)."
+        },
+        {
+          "id": "alt-intel-e810-nic",
+          "label": "Intel E810 Ethernet Controller Firmware v4.30",
+          "component_name": "NIC Firmware",
+          "vendor": "Intel",
+          "version": "4.30",
+          "origin_country": "US",
+          "part_number": "INTC-E810-430",
+          "type": "vendor_diversification",
+          "notes": "Alternative Tier-1 NIC vendor with active firmware support and no current critical CVE exposure."
+        }
+      ]
+    },
+    {
+      "target_component_name": "RAID Controller Firmware",
+      "target_vendor": "Broadcom",
+      "options": [
+        {
+          "id": "alt-broadcom-raid-53.10",
+          "label": "Broadcom MegaRAID Firmware v53.10.0 (Patched)",
+          "component_name": "RAID Controller Firmware",
+          "vendor": "Broadcom",
+          "version": "53.10.0",
+          "origin_country": "SG",
+          "part_number": "BCM-RAID-5310",
+          "type": "version_upgrade",
+          "notes": "Remediates privilege escalation flaw in utility config (CVE-2023-22809-SIM, CVSS 7.8)."
+        }
+      ]
+    },
+    {
+      "target_component_name": "UEFI Firmware",
+      "target_vendor": "AMI",
+      "options": [
+        {
+          "id": "alt-ami-uefi-6.0",
+          "label": "AMI Aptio V UEFI Firmware v6.0 (SMM Patched)",
+          "component_name": "UEFI Firmware",
+          "vendor": "AMI",
+          "version": "6.0",
+          "origin_country": "US",
+          "part_number": "AMI-UEFI-600",
+          "type": "version_upgrade",
+          "notes": "Remediates SMM memory corruption vulnerability (CVE-2022-31160-SIM, CVSS 8.2). Verified in clean 4-node rack demo."
+        }
+      ]
+    },
+    {
+      "target_component_name": "Network Camera Module",
+      "target_vendor": "Hikvision",
+      "options": [
+        {
+          "id": "alt-axis-m3065",
+          "label": "Axis Communications M3065-V (TAA/NDAA Compliant)",
+          "component_name": "Network Camera Module",
+          "vendor": "Axis Communications",
+          "version": "10.12",
+          "origin_country": "SE",
+          "part_number": "AXIS-M3065V",
+          "type": "compliant_vendor_swap",
+          "notes": "Swedish surveillance manufacturer. Clears U.S. NDAA Section 889 / FCC Covered List restricted-vendor violation."
+        },
+        {
+          "id": "alt-hanwha-xnv6080",
+          "label": "Hanwha Vision XNV-6080R (NDAA Compliant)",
+          "component_name": "Network Camera Module",
+          "vendor": "Hanwha Vision",
+          "version": "2.11",
+          "origin_country": "KR",
+          "part_number": "HW-XNV6080R",
+          "type": "compliant_vendor_swap",
+          "notes": "South Korean manufacturer; fully compliant with federal procurement standards."
+        }
+      ]
+    },
+    {
+      "target_component_name": "TPM Module",
+      "target_vendor": "Nuvoton",
+      "options": [
+        {
+          "id": "alt-infineon-tpm-optiga",
+          "label": "Infineon OPTIGA TPM SLB 9672 v15.32",
+          "component_name": "TPM Module",
+          "vendor": "Infineon",
+          "version": "15.32",
+          "origin_country": "DE",
+          "part_number": "INF-OPTIGA-9672",
+          "type": "vendor_diversification",
+          "notes": "CC EAL4+ certified TPM 2.0 controller from German manufacturer."
+        }
+      ]
+    }
+  ]
+}
