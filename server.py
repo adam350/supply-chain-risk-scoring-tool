@@ -17,6 +17,7 @@ import argparse
 import email
 import email.policy
 import json
+import logging
 import mimetypes
 import os
 import re
@@ -29,6 +30,8 @@ from http import HTTPStatus
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).parent.resolve()
 sys.path.insert(0, str(BASE_DIR / "src"))
@@ -93,8 +96,13 @@ def process_bom_file(file_path, original_filename, clean_csv=True):
         comps, _ = parse_bom(scoring_bom_path)
         with open(run_dir / "components.json", "w", encoding="utf-8") as f:
             json.dump(comps, f, indent=2)
-    except Exception:
-        pass
+    except Exception as exc:  # pragma: no cover
+        logger.warning(
+            "Failed to write components.json for run %s — What-If simulations may "
+            "use stale or missing component data. Cause: %s",
+            run_id,
+            exc,
+        )
 
     presentation = report.get("presentation", {})
     summary = {

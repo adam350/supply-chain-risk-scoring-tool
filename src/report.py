@@ -6,7 +6,7 @@ open a file in a browser and see the output during the demo.
 When report["presentation"] is present, HTML follows that 5-page layout.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from html import escape as html_escape
 
 
@@ -79,7 +79,7 @@ def build_findings_report(bom_source, scored_components, aggregate, parse_errors
         })
 
     report = {
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "bom_source": str(bom_source),
         "ingestion_errors": parse_errors,
         "aggregate": aggregate,
@@ -408,17 +408,24 @@ def _render_presentation_html(report):
         cve_ids = item.get("matched_cves") or [c["id"] for c in cves]
         cve_html = ""
         if cves:
-            cve_html = "<ul class='cve-ul'>" + "".join(
-                f"<li><span class='cve-id'>{_e(c['id'])}</span> "
-                f"<span class='badge badge-{'real' if c.get('provenance')=='real' else 'sim'}'>"
-                f"{'REAL' if c.get('provenance')=='real' else 'SIMULATED'}</span> "
-                f"<span class='sev sev-{(c.get('severity') or '').lower()}'>"
-                f"{_e(c.get('severity'))} · CVSS {_e(c.get('cvss'))}</span>"
-                f"<div class='cve-desc'>{_e(c.get('description'))}"
-                f"{(' — <a href=\"' + _e(c.get('source_url')) + '\" target=\"_blank\">source</a>') if c.get('source_url') else ''}"
-                f"</div></li>"
-                for c in cves
-            ) + "</ul>"
+            cve_items = []
+            for c in cves:
+                badge_cls = "real" if c.get("provenance") == "real" else "sim"
+                badge_lbl = "REAL" if c.get("provenance") == "real" else "SIMULATED"
+                sev_cls = (c.get("severity") or "").lower()
+                source_link = (
+                    " — <a href=\"" + _e(c.get("source_url")) + "\" target=\"_blank\">source</a>"
+                    if c.get("source_url") else ""
+                )
+                cve_items.append(
+                    f"<li><span class='cve-id'>{_e(c['id'])}</span> "
+                    f"<span class='badge badge-{badge_cls}'>{badge_lbl}</span> "
+                    f"<span class='sev sev-{sev_cls}'>"
+                    f"{_e(c.get('severity'))} · CVSS {_e(c.get('cvss'))}</span>"
+                    f"<div class='cve-desc'>{_e(c.get('description'))}"
+                    f"{source_link}</div></li>"
+                )
+            cve_html = "<ul class='cve-ul'>" + "".join(cve_items) + "</ul>"
         elif cve_ids:
             cve_html = "<div class='comp-meta'>" + ", ".join(_e(i) for i in cve_ids) + "</div>"
 
@@ -752,15 +759,23 @@ def _render_legacy_html(report):
     for f in report["findings_ranked"]:
         verdict = verdict_for_score(f["risk_score"], has_policy_flag=bool(f["policy_flags"]))
         verdict_class = verdict.replace(" ", "-").lower()
-        cve_list = "".join(
-            f"<li><span class='cve-id'>{_e(c['id'])}</span> "
-            f"<span class='badge badge-{'real' if c['provenance']=='real' else 'sim'}'>"
-            f"{'REAL' if c['provenance']=='real' else 'SIMULATED'}</span> "
-            f"<span class='sev sev-{_e(c['severity']).lower()}'>{_e(c['severity'])} · CVSS {_e(c['cvss'])}</span>"
-            f"<div class='cve-desc'>{_e(c['description'])}"
-            f"{' — <a href=\"' + _e(c['source_url']) + '\" target=\"_blank\">source</a>' if c['source_url'] else ''}</div></li>"
-            for c in f["matched_cves"]
-        )
+        cve_items = []
+        for c in f["matched_cves"]:
+            badge_cls = "real" if c["provenance"] == "real" else "sim"
+            badge_lbl = "REAL" if c["provenance"] == "real" else "SIMULATED"
+            sev_cls = _e(c["severity"]).lower()
+            source_link = (
+                " — <a href=\"" + _e(c["source_url"]) + "\" target=\"_blank\">source</a>"
+                if c["source_url"] else ""
+            )
+            cve_items.append(
+                f"<li><span class='cve-id'>{_e(c['id'])}</span> "
+                f"<span class='badge badge-{badge_cls}'>{badge_lbl}</span> "
+                f"<span class='sev sev-{sev_cls}'>{_e(c['severity'])} · CVSS {_e(c['cvss'])}</span>"
+                f"<div class='cve-desc'>{_e(c['description'])}"
+                f"{source_link}</div></li>"
+            )
+        cve_list = "".join(cve_items)
         policy = "".join(f"<li>{_e(p)}</li>" for p in f["policy_flags"])
         life = "".join(f"<li>{_e(p)}</li>" for p in f["lifecycle_flags"])
         units_display = ", ".join(f["affected_units"]) if f["affected_units"] != ["UNSPECIFIED"] else "—"

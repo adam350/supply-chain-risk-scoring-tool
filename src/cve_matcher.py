@@ -26,28 +26,76 @@ def load_cve_database(path):
         return json.load(f)["entries"]
 
 
-def _version_in_range(version, affected_versions):
-    """Very small version comparator sufficient for the "<=X" / exact-match
-    patterns used in this dataset. A production system would use a real
-    semver/range library (e.g. `packaging.version` for PEP 440-style, or a
-    vendor-specific scheme) - this is intentionally minimal for the prototype
-    and documented as a known limitation.
-    """
-    def to_tuple(v):
-        return tuple(int(p) if p.isdigit() else 0 for p in re.split(r"[.\-]", v))
+def _parse_version(v):
+    """Convert a version string into a comparable tuple of integers.
 
-    v_tuple = to_tuple(version)
-    for pattern in affected_versions:
-        pattern = pattern.strip()
-        if pattern.startswith("<="):
-            if v_tuple <= to_tuple(pattern[2:]):
-                return True
-        elif pattern.startswith("<"):
-            if v_tuple < to_tuple(pattern[1:]):
-                return True
+    Strategy:
+      - Strip build metadata (``+build``) first — it must be ignored when
+        comparing versions (SemVer §10).
+      - Split the remaining string on ``.`` and ``-``, so ``1.3.0-rc1``
+        becomes ``(1, 3, 0, -1)``.  Pure alpha labels (rc, alpha, beta, dev …)
+        map to ``-1`` so that pre-release versions sort *below* the
+        corresponding release — the conservative, safe-side assumption for
+        CVE range matching (a pre-release is still vulnerable).
+    """
+    v = v.split("+")[0]  # strip build metadata
+    parts = []
+    for segment in re.split(r"[.\-]", v):
+        if segment.isdigit():
+            parts.append(int(segment))
+        elif re.match(r"^[0-9]", segment):
+            # Mixed token like "1rc1" — take leading digit run only
+            parts.append(int(re.match(r"^[0-9]+", segment).group()))
         else:
-            if v_tuple == to_tuple(pattern):
-                return True
+            # Pure alpha label (rc, alpha, beta, dev …) — map to -1 so that
+            # pre-release < release after zero-padding in _cmp_versions.
+            parts.append(-1)
+    return tuple(parts) if parts else (0,)
+
+
+def _cmp_versions(a_tuple, b_tuple):
+    """Compare two version tuples, padding the shorter one with zeros.
+    Returns -1, 0, or 1."""
+    length = max(len(a_tuple), len(b_tuple))
+    a = a_tuple + (0,) * (length - len(a_tuple))
+    b = b_tuple + (0,) * (length - len(b_tuple))
+    return (a > b) - (a < b)
+
+
+_OPERATORS = {
+    ">=": lambda a, b: _cmp_versions(a, b) >= 0,
+    "<=": lambda a, b: _cmp_versions(a, b) <= 0,
+    "!=": lambda a, b: _cmp_versions(a, b) != 0,
+    ">":  lambda a, b: _cmp_versions(a, b) > 0,
+    "<":  lambda a, b: _cmp_versions(a, b) < 0,
+}
+
+
+def _match_clause(v_tuple, clause):
+    """Evaluate a single version clause (operator + version, or bare exact version)."""
+    for op_str, fn in _OPERATORS.items():
+        if clause.startswith(op_str):
+            return fn(v_tuple, _parse_version(clause[len(op_str):]))
+    # No operator prefix → exact equality
+    return _cmp_versions(v_tuple, _parse_version(clause)) == 0
+
+
+def _version_in_range(version, affected_versions):
+    """Return True if *version* matches any entry in *affected_versions*.
+
+    Supported pattern forms (no external dependencies required):
+      - Exact:    ``12.4``
+      - Bounded:  ``<=12.4``, ``<13.0``, ``>=1.0``, ``>0.9``, ``!=1.2``
+      - Compound: ``>=1.0.0,<2.0.0``  (comma-separated; ALL clauses must hold)
+
+    Build metadata (``+...``) is ignored; pre-release labels (``-rc1``,
+    ``-alpha``) are normalised to ``0`` (pre-release < release).
+    """
+    v_tuple = _parse_version(version)
+    for pattern in affected_versions:
+        clauses = [c.strip() for c in pattern.strip().split(",")]
+        if all(_match_clause(v_tuple, clause) for clause in clauses):
+            return True
     return False
 
 
