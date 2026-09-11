@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-10T18:11:29.822572+00:00",
-  "bom_source": "/Users/adamkyler/supply-chain-risk-scoring-tool/output/cleaned_bom.csv",
+  "generated_at": "2026-09-11T10:59:52.435449+00:00",
+  "bom_source": "output/cleaned_bom.csv",
   "ingestion_errors": [],
   "aggregate": {
     "aggregate_score": 62.3,

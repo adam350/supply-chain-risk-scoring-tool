@@ -43,6 +43,7 @@ from cve_matcher import load_cve_database
 from rules_engine import load_rules
 from alternatives_engine import load_alternatives, find_alternatives_for
 from simulator import run_simulation
+from visualization import build_graph_data
 
 UPLOADS_DIR = BASE_DIR / "output" / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
@@ -104,6 +105,14 @@ def process_bom_file(file_path, original_filename, clean_csv=True):
             exc,
         )
 
+    # Cache graph data for fast interactive visualization
+    try:
+        graph_data = build_graph_data(report)
+        with open(run_dir / "graph.json", "w", encoding="utf-8") as f:
+            json.dump(graph_data, f, indent=2)
+    except Exception as exc:
+        logger.warning("Failed to write graph.json for run %s: %s", run_id, exc)
+
     presentation = report.get("presentation", {})
     summary = {
         "run_id": run_id,
@@ -119,6 +128,7 @@ def process_bom_file(file_path, original_filename, clean_csv=True):
         "ingestion_errors": len(report.get("ingestion_errors", [])),
         "report_html_url": f"/reports/{run_id}/report.html",
         "report_json_url": f"/reports/{run_id}/report.json",
+        "graph_json_url": f"/reports/{run_id}/graph.json",
         "cleaning_report_url": f"/reports/{run_id}/cleaning_report.html" if cleaned_csv_path else None,
     }
 
@@ -134,6 +144,8 @@ HTML_PAGE = """<!DOCTYPE html>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="/d3.min.js"></script>
+  <script>if (typeof d3 === 'undefined') { document.write('<script src="https://cdn.jsdelivr.net/npm/d3@7"><\\/script>'); }</script>
   <style>
     :root {
       --bg: #090d16;
@@ -541,6 +553,282 @@ HTML_PAGE = """<!DOCTYPE html>
       background: #0f172a;
     }
 
+    /* Interactive Graph Styles */
+    .graph-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .graph-legend-bar {
+      padding: 10px 20px;
+      background: rgba(13, 19, 34, 0.9);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 12px;
+    }
+
+    .graph-legend-group {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .legend-title {
+      font-weight: 700;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      color: var(--text);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .graph-workspace {
+      display: flex;
+      height: 520px;
+      background: #070b14;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (max-width: 900px) {
+      .graph-workspace {
+        flex-direction: column;
+        height: 750px;
+      }
+    }
+
+    .graph-canvas-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    #riskGraphSvg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+
+    #riskGraphSvg:active {
+      cursor: grabbing;
+    }
+
+    .graph-hint-overlay {
+      position: absolute;
+      bottom: 12px;
+      left: 16px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(6px);
+      border: 1px solid var(--card-border);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      pointer-events: none;
+      font-family: var(--mono);
+    }
+
+    .graph-empty-state {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      background: rgba(7, 11, 20, 0.95);
+      z-index: 5;
+    }
+
+    .graph-inspector-panel {
+      width: 360px;
+      border-left: 1px solid var(--card-border);
+      background: rgba(15, 22, 38, 0.95);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 900px) {
+      .graph-inspector-panel {
+        width: 100%;
+        height: 280px;
+        border-left: none;
+        border-top: 1px solid var(--card-border);
+      }
+    }
+
+    .inspector-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(17, 24, 39, 0.7);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .inspector-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .inspector-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .inspector-empty {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-muted);
+    }
+
+    .insp-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      margin-bottom: 6px;
+    }
+
+    .insp-badge-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .insp-cve-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 6px;
+    }
+
+    .insp-cve-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .insp-cve-id {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 12px;
+      color: #fca5a5;
+    }
+
+    .insp-cve-cvss {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .insp-cve-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .insp-mitigation-box {
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #bae6fd;
+      line-height: 1.45;
+    }
+
+    .graph-link {
+      stroke: #334155;
+      stroke-opacity: 0.6;
+      stroke-width: 1.4;
+      transition: stroke 0.2s, stroke-opacity 0.2s, stroke-width 0.2s;
+    }
+
+    .graph-link.vulnerable {
+      stroke: #f43f5e;
+      stroke-dasharray: 4, 3;
+      stroke-opacity: 0.75;
+    }
+
+    .graph-link.highlighted {
+      stroke-opacity: 1 !important;
+      stroke-width: 2.5 !important;
+    }
+
+    .graph-node {
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .graph-node circle, .graph-node rect, .graph-node polygon {
+      transition: stroke 0.2s, stroke-width 0.2s, filter 0.2s;
+    }
+
+    .graph-node.selected circle, .graph-node.selected rect, .graph-node.selected polygon {
+      stroke: #38bdf8 !important;
+      stroke-width: 3.5px !important;
+      filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8)) !important;
+    }
+
+    .graph-node:hover circle, .graph-node:hover rect, .graph-node:hover polygon {
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
+    }
+
+    .graph-label {
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 500;
+      fill: #cbd5e1;
+      pointer-events: none;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+    }
+
+
     .loader-overlay {
       position: fixed;
       inset: 0;
@@ -902,6 +1190,62 @@ HTML_PAGE = """<!DOCTYPE html>
         </div>
       </div>
 
+      <!-- Interactive Supply Chain Risk Graph Card -->
+      <div class="graph-card" id="riskGraphCard">
+        <div class="viewer-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="viewer-title" style="display: flex; align-items: center; gap: 8px;">
+              <span>🌐 Supply Chain Risk Graph</span>
+              <span id="graphNodeCountBadge" class="header-badge" style="font-size: 11px; padding: 2px 8px;">0 nodes</span>
+            </div>
+          </div>
+          <div class="btn-group" style="align-items: center; gap: 8px;">
+            <button type="button" class="btn btn-secondary" style="font-size: 12px; padding: 5px 12px;" onclick="resetGraphZoom()" title="Center & Fit View">⟲ Center & Fit</button>
+            <button type="button" class="btn btn-secondary" style="font-size: 12px; padding: 5px 10px;" onclick="zoomGraphIn()" title="Zoom In">+</button>
+            <button type="button" class="btn btn-secondary" style="font-size: 12px; padding: 5px 10px;" onclick="zoomGraphOut()" title="Zoom Out">−</button>
+          </div>
+        </div>
+
+        <div class="graph-legend-bar">
+          <div class="graph-legend-group">
+            <span class="legend-title">Components:</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #ef4444; box-shadow: 0 0 6px #ef4444;"></span>Critical (≥60)</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #f97316; box-shadow: 0 0 6px #f97316;"></span>High (50–59)</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #38bdf8; box-shadow: 0 0 6px #38bdf8;"></span>Medium (25–49)</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>Low (&lt;25)</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #94a3b8;"></span>Unscored</span>
+          </div>
+          <div class="graph-legend-group" style="border-left: 1px solid var(--card-border); padding-left: 12px;">
+            <span class="legend-title">Entities:</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #818cf8; border-radius: 2px;"></span>Vendor</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #f43f5e; transform: rotate(45deg); border-radius: 1px;"></span>CVE Vulnerability</span>
+          </div>
+        </div>
+
+        <div class="graph-workspace">
+          <div class="graph-canvas-wrap" id="graphCanvasWrap">
+            <svg id="riskGraphSvg"></svg>
+            <div id="graphEmptyState" class="graph-empty-state" style="display: none;">
+              <span>No component relationship graph available for this BOM.</span>
+            </div>
+            <div class="graph-hint-overlay">Drag nodes • Scroll to zoom • Click node to inspect</div>
+          </div>
+          <div class="graph-inspector-panel" id="graphInspectorPanel">
+            <div class="inspector-header">
+              <span class="inspector-title" id="inspectorHeaderTitle">Entity Inspector</span>
+              <span id="inspectorBadge" class="pill" style="display: none;"></span>
+            </div>
+            <div class="inspector-body" id="inspectorBody">
+              <div class="inspector-empty">
+                <div style="font-size: 28px; margin-bottom: 8px;">🔍</div>
+                <div style="font-weight: 600; color: #fff; margin-bottom: 4px;">Click an entity to inspect</div>
+                <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">Click any component, vendor, or CVE node in the graph to view risk score breakdown, specifications, and mitigations.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="report-viewer-card">
         <div class="viewer-header">
           <div class="viewer-title" id="viewerTitle">Risk Findings & Action Report</div>
@@ -1175,6 +1519,458 @@ HTML_PAGE = """<!DOCTYPE html>
       // Populate Simulator Target dropdown
       currentRunId = data.run_id;
       fetchRunFindings(data.report_json_url);
+
+      // Render interactive supply chain risk graph (non-blocking)
+      loadAndRenderGraph(data.run_id);
+    }
+
+    /* Interactive Supply Chain Risk Graph Logic */
+    let graphSimulation = null;
+    let graphZoomBehavior = null;
+    let graphSvgSelection = null;
+    let currentGraphData = null;
+    let selectedNodeId = null;
+
+    async function loadAndRenderGraph(runId) {
+      const badge = document.getElementById('graphNodeCountBadge');
+      const emptyState = document.getElementById('graphEmptyState');
+
+      try {
+        const url = runId ? `/api/graph?run_id=${encodeURIComponent(runId)}` : '/api/graph';
+        const resp = await fetch(url);
+        if (!resp.ok) {
+          console.warn('Graph API returned non-200:', resp.status);
+          if (emptyState) emptyState.style.display = 'flex';
+          return;
+        }
+        const graphData = await resp.json();
+        if (!graphData || !graphData.nodes || graphData.nodes.length === 0) {
+          if (badge) badge.textContent = '0 nodes';
+          if (emptyState) emptyState.style.display = 'flex';
+          return;
+        }
+        if (emptyState) emptyState.style.display = 'none';
+        if (badge) badge.textContent = `${graphData.nodes.length} nodes, ${graphData.edges.length} edges`;
+        currentGraphData = graphData;
+        renderRiskGraph(graphData);
+      } catch (err) {
+        console.warn('Graph rendering skipped or failed gracefully:', err);
+        if (emptyState) emptyState.style.display = 'flex';
+      }
+    }
+
+    function renderRiskGraph(data) {
+      if (typeof d3 === 'undefined') {
+        console.warn('D3 is not loaded; graph rendering skipped.');
+        return;
+      }
+
+      const svgEl = document.getElementById('riskGraphSvg');
+      if (!svgEl) return;
+      const wrap = document.getElementById('graphCanvasWrap');
+      const width = wrap.clientWidth || 700;
+      const height = wrap.clientHeight || 520;
+
+      const svg = d3.select(svgEl);
+      svg.selectAll('*').remove();
+      graphSvgSelection = svg;
+
+      // Deep copy nodes and edges so D3 mutation doesn't taint original data
+      const nodes = data.nodes.map(d => Object.assign({}, d));
+      const edges = data.edges.map(d => Object.assign({}, d));
+
+      // Container for zoom/pan
+      const g = svg.append('g').attr('class', 'graph-root');
+
+      // Setup zoom
+      graphZoomBehavior = d3.zoom()
+        .scaleExtent([0.15, 4])
+        .on('zoom', (event) => {
+          g.attr('transform', event.transform);
+        });
+      svg.call(graphZoomBehavior);
+
+      // Deselect on background click
+      svg.on('click', (event) => {
+        if (event.target.tagName === 'svg' || event.target.classList.contains('graph-root')) {
+          resetGraphSelection();
+        }
+      });
+
+      // Simulation
+      graphSimulation = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(edges).id(d => d.id).distance(d => d.type === 'vulnerable_to' ? 75 : 95))
+        .force('charge', d3.forceManyBody().strength(-220))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collide', d3.forceCollide().radius(d => d.type === 'component' ? 28 : 22));
+
+      // Color mapping for components
+      const riskColors = {
+        critical: '#ef4444',
+        high: '#f97316',
+        medium: '#38bdf8',
+        low: '#10b981',
+        unscored: '#94a3b8'
+      };
+
+      // Draw Edges
+      const link = g.append('g')
+        .attr('class', 'links')
+        .selectAll('line')
+        .data(edges)
+        .enter().append('line')
+        .attr('class', d => `graph-link ${d.type === 'vulnerable_to' ? 'vulnerable' : ''}`);
+
+      // Draw Nodes
+      const node = g.append('g')
+        .attr('class', 'nodes')
+        .selectAll('g')
+        .data(nodes)
+        .enter().append('g')
+        .attr('class', 'graph-node')
+        .call(d3.drag()
+          .on('start', dragStarted)
+          .on('drag', dragged)
+          .on('end', dragEnded))
+        .on('click', (event, d) => {
+          event.stopPropagation();
+          selectGraphNode(d, link, node);
+        });
+
+      // Node Shapes by type
+      node.each(function(d) {
+        const el = d3.select(this);
+        if (d.type === 'component') {
+          const color = riskColors[d.risk_level] || '#94a3b8';
+          el.append('circle')
+            .attr('r', 18)
+            .attr('fill', `${color}25`)
+            .attr('stroke', color)
+            .attr('stroke-width', 2.5)
+            .style('filter', `drop-shadow(0 0 5px ${color}55)`);
+
+          // Inner center dot
+          el.append('circle')
+            .attr('r', 5)
+            .attr('fill', color);
+        } else if (d.type === 'vendor') {
+          el.append('rect')
+            .attr('x', -16)
+            .attr('y', -12)
+            .attr('width', 32)
+            .attr('height', 24)
+            .attr('rx', 5)
+            .attr('fill', '#1e1b4b')
+            .attr('stroke', '#818cf8')
+            .attr('stroke-width', 1.8)
+            .style('filter', 'drop-shadow(0 0 5px rgba(129, 140, 248, 0.4))');
+
+          el.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '4px')
+            .attr('font-size', '9px')
+            .attr('fill', '#c7d2fe')
+            .attr('font-family', 'var(--mono)')
+            .attr('font-weight', '700')
+            .text('V');
+        } else if (d.type === 'vulnerability') {
+          // Diamond shape
+          el.append('polygon')
+            .attr('points', '0,-14 14,0 0,14 -14,0')
+            .attr('fill', '#450a0a')
+            .attr('stroke', '#f43f5e')
+            .attr('stroke-width', 1.8)
+            .style('filter', 'drop-shadow(0 0 6px rgba(244, 63, 94, 0.5))');
+
+          el.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', '3.5px')
+            .attr('font-size', '8px')
+            .attr('fill', '#fecdd3')
+            .attr('font-family', 'var(--mono)')
+            .attr('font-weight', '700')
+            .text('!');
+        }
+
+        // Label below node
+        el.append('text')
+          .attr('class', 'graph-label')
+          .attr('text-anchor', 'middle')
+          .attr('dy', '26px')
+          .text(d.label && d.label.length > 16 ? d.label.slice(0, 15) + '…' : d.label);
+      });
+
+      // Simulation tick
+      graphSimulation.on('tick', () => {
+        link
+          .attr('x1', d => d.source.x)
+          .attr('y1', d => d.source.y)
+          .attr('x2', d => d.target.x)
+          .attr('y2', d => d.target.y);
+
+        node.attr('transform', d => `translate(${d.x},${d.y})`);
+      });
+
+      function dragStarted(event, d) {
+        if (!event.active) graphSimulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+      function dragEnded(event, d) {
+        if (!event.active) graphSimulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+
+      resetGraphSelection();
+    }
+
+    function selectGraphNode(d, link, node) {
+      selectedNodeId = d.id;
+
+      // Highlight selected node
+      d3.selectAll('.graph-node').classed('selected', n => n.id === d.id);
+
+      // Highlight connected edges
+      d3.selectAll('.graph-link').classed('highlighted', l => {
+        const sId = typeof l.source === 'object' ? l.source.id : l.source;
+        const tId = typeof l.target === 'object' ? l.target.id : l.target;
+        return sId === d.id || tId === d.id;
+      });
+
+      updateInspector(d);
+    }
+
+    function resetGraphSelection() {
+      selectedNodeId = null;
+      d3.selectAll('.graph-node').classed('selected', false);
+      d3.selectAll('.graph-link').classed('highlighted', false);
+
+      const headerTitle = document.getElementById('inspectorHeaderTitle');
+      const badge = document.getElementById('inspectorBadge');
+      const body = document.getElementById('inspectorBody');
+      if (headerTitle) headerTitle.textContent = 'Entity Inspector';
+      if (badge) badge.style.display = 'none';
+      if (body) {
+        body.innerHTML = `
+          <div class="inspector-empty">
+            <div style="font-size: 28px; margin-bottom: 8px;">🔍</div>
+            <div style="font-weight: 600; color: #fff; margin-bottom: 4px;">Click an entity to inspect</div>
+            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">Click any component, vendor, or CVE node in the graph to view risk score breakdown, specifications, and mitigations.</div>
+          </div>
+        `;
+      }
+    }
+
+    function updateInspector(d) {
+      const headerTitle = document.getElementById('inspectorHeaderTitle');
+      const badge = document.getElementById('inspectorBadge');
+      const body = document.getElementById('inspectorBody');
+      if (!body) return;
+
+      if (d.type === 'component') {
+        headerTitle.textContent = d.name;
+        badge.style.display = 'inline-block';
+        badge.textContent = d.risk_score !== null ? `Score: ${d.risk_score}` : 'Unscored';
+
+        const colorMap = {
+          critical: '#ef4444',
+          high: '#f97316',
+          medium: '#38bdf8',
+          low: '#10b981',
+          unscored: '#94a3b8'
+        };
+        const badgeColor = colorMap[d.risk_level] || '#94a3b8';
+        badge.style.background = `${badgeColor}22`;
+        badge.style.color = badgeColor;
+        badge.style.borderColor = `${badgeColor}55`;
+
+        let cvesHtml = '';
+        if (d.matched_cves && d.matched_cves.length > 0) {
+          cvesHtml = d.matched_cves.map(c => `
+            <div class="insp-cve-card">
+              <div class="insp-cve-header">
+                <span class="insp-cve-id">${c.id}</span>
+                <span class="insp-cve-cvss" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">CVSS ${c.cvss || 'N/A'}</span>
+              </div>
+              <div class="insp-cve-desc">${c.description || 'No CVE summary available.'}</div>
+            </div>
+          `).join('');
+        } else {
+          cvesHtml = '<div style="font-size: 12px; color: var(--text-muted);">No matched CVEs recorded.</div>';
+        }
+
+        let flagsHtml = '';
+        const allFlags = [...(d.policy_flags || []), ...(d.lifecycle_flags || [])];
+        if (allFlags.length > 0) {
+          flagsHtml = allFlags.map(f => `<div style="font-size: 11.5px; color: #f59e0b; padding: 3px 0;">⚠️ ${f}</div>`).join('');
+        } else {
+          flagsHtml = '<div style="font-size: 12px; color: #10b981;">✓ No policy or lifecycle violations</div>';
+        }
+
+        let breakdownHtml = '';
+        if (d.score_breakdown && Object.keys(d.score_breakdown).length > 0) {
+          breakdownHtml = `
+            <div>
+              <div class="insp-section-title">Score Breakdown</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; font-size: 11px; text-align: center;">
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 6px; border-radius: 6px; border: 1px solid var(--card-border);">
+                  <div style="color: var(--text-muted);">CVE</div>
+                  <div style="font-weight: 700; font-family: var(--mono); color: #f87171;">${d.score_breakdown.cve_term || 0}</div>
+                </div>
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 6px; border-radius: 6px; border: 1px solid var(--card-border);">
+                  <div style="color: var(--text-muted);">Vendor</div>
+                  <div style="font-weight: 700; font-family: var(--mono); color: #fb923c;">${d.score_breakdown.vendor_origin_term || 0}</div>
+                </div>
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 6px; border-radius: 6px; border: 1px solid var(--card-border);">
+                  <div style="color: var(--text-muted);">Lifecycle</div>
+                  <div style="font-weight: 700; font-family: var(--mono); color: #38bdf8;">${d.score_breakdown.lifecycle_term || 0}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        body.innerHTML = `
+          <div>
+            <div class="insp-section-title">Component Specifications</div>
+            <div style="font-size: 12.5px; display: flex; flex-direction: column; gap: 4px;">
+              <div><span style="color: var(--text-muted);">Vendor:</span> <strong style="color: #fff;">${d.vendor || 'Unknown'}</strong></div>
+              <div><span style="color: var(--text-muted);">Version:</span> <span style="font-family: var(--mono); color: #fff;">${d.version || 'N/A'}</span></div>
+              <div><span style="color: var(--text-muted);">Origin Country:</span> <span style="font-family: var(--mono); color: #fff;">${d.origin_country || 'N/A'}</span></div>
+              <div><span style="color: var(--text-muted);">Deployment:</span> <span style="color: #fff;">${d.unit_count || 1} physical unit(s)</span></div>
+            </div>
+          </div>
+
+          ${breakdownHtml}
+
+          <div>
+            <div class="insp-section-title">Vulnerabilities (${(d.matched_cves || []).length})</div>
+            ${cvesHtml}
+          </div>
+
+          <div>
+            <div class="insp-section-title">Policy & Lifecycle Flags</div>
+            ${flagsHtml}
+          </div>
+
+          ${d.suggested_mitigation ? `
+          <div>
+            <div class="insp-section-title">Suggested Mitigation</div>
+            <div class="insp-mitigation-box">${d.suggested_mitigation}</div>
+          </div>` : ''}
+        `;
+      } else if (d.type === 'vendor') {
+        headerTitle.textContent = `Vendor: ${d.name}`;
+        badge.style.display = 'inline-block';
+        badge.textContent = `${d.component_count || 1} BOM components`;
+        badge.style.background = 'rgba(129, 140, 248, 0.15)';
+        badge.style.color = '#818cf8';
+        badge.style.borderColor = 'rgba(129, 140, 248, 0.3)';
+
+        // Find connected components
+        const connectedComps = (currentGraphData && currentGraphData.edges ? currentGraphData.edges : [])
+          .filter(e => {
+            const tId = typeof e.target === 'object' ? e.target.id : e.target;
+            return tId === d.id && e.type === 'supplied_by';
+          })
+          .map(e => {
+            const sId = typeof e.source === 'object' ? e.source.id : e.source;
+            return (currentGraphData.nodes || []).find(n => n.id === sId);
+          })
+          .filter(Boolean);
+
+        const compListHtml = connectedComps.map(c => `
+          <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--card-border); border-radius: 6px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; font-weight: 600; color: #fff;">${c.name}</span>
+            <span style="font-size: 11px; font-family: var(--mono); color: #38bdf8;">${c.risk_score !== null ? 'Score: ' + c.risk_score : 'Unscored'}</span>
+          </div>
+        `).join('');
+
+        body.innerHTML = `
+          <div>
+            <div class="insp-section-title">Supplier Profile</div>
+            <div style="font-size: 13px; color: #fff; margin-bottom: 8px;">
+              Supplies <strong>${d.component_count || 1}</strong> component(s) identified in this BOM.
+            </div>
+          </div>
+          <div>
+            <div class="insp-section-title">Supplied Components</div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              ${compListHtml || '<div style="font-size: 12px; color: var(--text-muted);">No components linked.</div>'}
+            </div>
+          </div>
+        `;
+      } else if (d.type === 'vulnerability') {
+        headerTitle.textContent = d.cve_id || d.label;
+        badge.style.display = 'inline-block';
+        badge.textContent = `CVSS ${d.cvss || 'N/A'}`;
+        badge.style.background = 'rgba(239, 68, 68, 0.15)';
+        badge.style.color = '#ef4444';
+        badge.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+
+        // Find affected components
+        const affectedComps = (currentGraphData && currentGraphData.edges ? currentGraphData.edges : [])
+          .filter(e => {
+            const tId = typeof e.target === 'object' ? e.target.id : e.target;
+            return tId === d.id && e.type === 'vulnerable_to';
+          })
+          .map(e => {
+            const sId = typeof e.source === 'object' ? e.source.id : e.source;
+            return (currentGraphData.nodes || []).find(n => n.id === sId);
+          })
+          .filter(Boolean);
+
+        const compListHtml = affectedComps.map(c => `
+          <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--card-border); border-radius: 6px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; font-weight: 600; color: #fff;">${c.name}</span>
+            <span style="font-size: 11px; font-family: var(--mono); color: #f87171;">Risk: ${c.risk_score || 'N/A'}</span>
+          </div>
+        `).join('');
+
+        body.innerHTML = `
+          <div>
+            <div class="insp-section-title">Vulnerability Details</div>
+            <div style="font-size: 12.5px; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px;">
+              <div><span style="color: var(--text-muted);">Severity:</span> <strong style="color: #fca5a5;">${d.severity || 'UNKNOWN'}</strong></div>
+              <div><span style="color: var(--text-muted);">CVSS Score:</span> <strong style="font-family: var(--mono); color: #f87171;">${d.cvss || 'N/A'}</strong></div>
+              ${d.source_url ? `<div><a href="${d.source_url}" target="_blank" style="color: var(--accent); font-size: 11.5px;">Advisory Reference ↗</a></div>` : ''}
+            </div>
+            <div class="insp-section-title">Description</div>
+            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5; background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 6px; border: 1px solid var(--card-border);">
+              ${d.description || 'No advisory description recorded.'}
+            </div>
+          </div>
+          <div>
+            <div class="insp-section-title">Affected BOM Components (${affectedComps.length})</div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              ${compListHtml || '<div style="font-size: 12px; color: var(--text-muted);">No components linked.</div>'}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function resetGraphZoom() {
+      if (graphSvgSelection && graphZoomBehavior) {
+        graphSvgSelection.transition().duration(500).call(graphZoomBehavior.transform, d3.zoomIdentity);
+      }
+    }
+
+    function zoomGraphIn() {
+      if (graphSvgSelection && graphZoomBehavior) {
+        graphSvgSelection.transition().duration(300).call(graphZoomBehavior.scaleBy, 1.3);
+      }
+    }
+
+    function zoomGraphOut() {
+      if (graphSvgSelection && graphZoomBehavior) {
+        graphSvgSelection.transition().duration(300).call(graphZoomBehavior.scaleBy, 0.77);
+      }
     }
 
     /* What-If Simulator Client Logic */
@@ -1564,6 +2360,82 @@ class BOMServerHandler(BaseHTTPRequestHandler):
                 "options": options,
                 "has_vetted_alternatives": len(options) > 0,
             })
+            return
+
+        if path == "/d3.min.js":
+            d3_path = BASE_DIR / "src" / "d3.min.js"
+            if d3_path.is_file():
+                with open(d3_path, "rb") as f:
+                    content = f.read()
+                self.send_response(HTTPStatus.OK)
+                self.send_header("Content-Type", "application/javascript; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+            else:
+                self.send_response(HTTPStatus.NOT_FOUND)
+                self.end_headers()
+                return
+
+        if path == "/api/graph":
+            params = urllib.parse.parse_qs(parsed.query)
+            run_id = params.get("run_id", [""])[0].strip()
+            sample_key = params.get("sample", [""])[0].strip().lower()
+
+            report_data = None
+
+            if run_id:
+                run_dir = UPLOADS_DIR / run_id
+                graph_file = run_dir / "graph.json"
+                if graph_file.exists():
+                    try:
+                        with open(graph_file, "r", encoding="utf-8") as f:
+                            self.send_json(HTTPStatus.OK, json.load(f))
+                            return
+                    except Exception:
+                        pass
+
+                rep_file = run_dir / "report.json"
+                if rep_file.exists():
+                    try:
+                        with open(rep_file, "r", encoding="utf-8") as f:
+                            report_data = json.load(f)
+                    except Exception:
+                        report_data = None
+
+            if report_data is None and sample_key:
+                if sample_key in SAMPLES:
+                    try:
+                        _, rep, _ = process_bom_file(SAMPLES[sample_key], SAMPLES[sample_key].name)
+                        report_data = rep
+                    except Exception:
+                        report_data = None
+
+            if report_data is None:
+                default_report = BASE_DIR / "output" / "report.json"
+                if default_report.exists():
+                    try:
+                        with open(default_report, "r", encoding="utf-8") as f:
+                            report_data = json.load(f)
+                    except Exception:
+                        report_data = None
+                if report_data is None and SAMPLES.get("csv"):
+                    try:
+                        _, rep, _ = process_bom_file(SAMPLES["csv"], SAMPLES["csv"].name)
+                        report_data = rep
+                    except Exception:
+                        report_data = None
+
+            if report_data is None:
+                self.send_json(HTTPStatus.NOT_FOUND, {"error": "No BOM report data found to build graph."})
+                return
+
+            try:
+                graph_data = build_graph_data(report_data)
+                self.send_json(HTTPStatus.OK, graph_data)
+            except Exception as e:
+                self.send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"Failed to build graph: {e}"})
             return
 
         if path.startswith("/reports/"):

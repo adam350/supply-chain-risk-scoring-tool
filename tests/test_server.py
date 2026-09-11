@@ -156,6 +156,34 @@ class TestBOMServer(unittest.TestCase):
             self.assertEqual(data["substitute"]["cve_count"], 0)
             self.assertIn("Remediated 2 known CVE(s)", data["explanation"])
 
+    def test_api_graph_default(self):
+        req = urllib.request.Request(f"{self.base_url}/api/graph")
+        with urllib.request.urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertIn("application/json", resp.headers.get("Content-Type"))
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertIn("nodes", data)
+            self.assertIn("edges", data)
+            self.assertIn("summary", data)
+            self.assertGreater(len(data["nodes"]), 0)
+            self.assertGreater(len(data["edges"]), 0)
+            types = {n["type"] for n in data["nodes"]}
+            self.assertIn("component", types)
+
+    def test_api_graph_sample(self):
+        req = urllib.request.Request(f"{self.base_url}/api/graph?sample=cyclonedx")
+        with urllib.request.urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertIn("nodes", data)
+            self.assertIn("edges", data)
+
+    def test_d3_endpoint(self):
+        req = urllib.request.Request(f"{self.base_url}/d3.min.js")
+        with urllib.request.urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertIn("javascript", resp.headers.get("Content-Type"))
+
 
 if __name__ == "__main__":
     unittest.main()
